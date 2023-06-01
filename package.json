@@ -1,0 +1,38 @@
+{
+  "name": "tacofeliz",
+  "version": "1.0.0",
+  "description": "prueba técnica Taco Feliz",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc && node dist/server.js",
+    "dev:server": "nodemon --watch src --exec 'ts-node' src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "typescript",
+    "api",
+    "rest",
+    "crud",
+    "mailjet",
+    "jest",
+    "mongodb"
+  ],
+  "author": "Roberto Miranda Morales",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/morgan": "^1.9.4",
+    "@types/node": "^20.2.5",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+}
