@@ -43,6 +43,7 @@ router.get('/', function (req: Request, res: Response) {
     const email: string = req.body.email;
     const password: string = req.body.password;
 
+    // Se procede a registrar el usuario
     const usuarioResponse: usuarioT = {
         id: 'user-123',
         tipo: '2',
@@ -57,7 +58,9 @@ router.get('/', function (req: Request, res: Response) {
     res.send({
         status: 'ok',
         msg: 'usuario registrado',
-        data: usuarioResponse
+        data: {
+            usuarioEstatus: 'activo'
+        }
     });
 });
 
