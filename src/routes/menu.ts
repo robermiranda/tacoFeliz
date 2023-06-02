@@ -24,6 +24,24 @@ function validaModificador (req: Request, res: Response, next: NextFunction) {
     }
 }
 
+function validaModificadorParaEditar (req: Request, res: Response, next: NextFunction) {
+    const {modificadorId, nombre, precio, disponibilidad} = req.body;
+    const _precio = Number.parseFloat(precio);
+
+    if (modificadorId && (disponibilidad || 
+        (nombre && nombre.length <= 40) ||
+        _precio && ! Number.isNaN(_precio) && _precio >= 0)) {
+        
+        next();
+    }
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'El modificadorId es obligatorio y almenos uno de los siguientes datos son obligatorios: nombre.length <= 40, precio > 0 y disponibilidad'
+        });
+    }
+}
+
 function validaModificadorId (req: Request, res: Response, next: NextFunction) {
     
     if ( ! req.params.modificadorId) {
@@ -109,6 +127,25 @@ export default router.get('/', function (req: Request, res: Response) {
         status: 'ok',
         msg: 'modificador eliminado',
         data: req.params.modificadorId
+    });
+})
+.patch('/modificadores', validaModificadorParaEditar, function (req: Request, res: Response) {
+    // caso de uso (usuario admin): editar un modificador
+
+    const modificadorId = req.body.modificadorId;
+    const nombre: string = req.body.nombre;
+    const precio: number = Number.parseFloat(req.body.precio);
+    const disponibilidad: boolean = req.body.disponibilidad;
+
+    // se procede a enviar a la db el nuevo modificador
+    // se da a la db la responsabilidad de verificar que existe modificador para id = modificadorId
+
+    res.send({
+        status: 'ok',
+        msg: 'modificador agregado',
+        data: {
+            modificadorId, nombre, precio, disponibilidad
+        }
     });
 });
 
