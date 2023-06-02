@@ -36,6 +36,23 @@ function getUsuarioDesc (usuarios: any[], usuarioId: string): string {
     return usuarioId;
 }
 
+function preValidaOrden (req: Request, res: Response, next: NextFunction) {
+    const metodoPago: string = req.body.metodoPago;
+    const direccionEnvio: string = req.body.direccionEnvio;
+    const menu: string[] = req.body.menu;
+
+    if (metodoPago && direccionEnvio &&
+        Array.isArray(menu) &&
+        menu.length > 0) {
+        
+        next();
+    }
+    else res.status(400).send({
+        status: 'warn',
+        msg: 'Los siguientes datos son obligatorios: direccion de envio menu y método de pago'
+    });
+}
+
 function validaOrdenId (req: Request, res: Response, next: NextFunction) {
     
     if (req.params.id) {
@@ -56,16 +73,41 @@ function validaOrdenId (req: Request, res: Response, next: NextFunction) {
     }
 }
 
-router.get('/', function (req: Request, res: Response) {
-    
-    const ordenResponse: ordenCompuestaT = ordenes.map((orden: ordenBasicaT) => {
+export default router.get('/', function (req: Request, res: Response) {
+    // lista de ordenes
+    const ordenResponse: string[] = ordenes.map((orden: ordenBasicaT) => orden.id);
+
+    if (ordenResponse.length > 0) {
+        res.send({
+            status: 'ok',
+            data: ordenResponse
+        });
+    }
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'NO hay ordenes registradas'
+        });
+    }
+})
+.get('/:ordenId', function (req: Request, res: Response) {
+    // caso de uso (usuario final): verificar disponibilidad y totales
+    const orden: ordenCompuestaT = ordenes.find((orden: ordenBasicaT) => orden.id === req.params.ordenId);
+
+    if ( ! orden) {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'NO se encontro la orden'
+        });
+    }
+    else {
         const estatusDesc: string | undefined = ordenEstatus.get(orden.estatus);
         const metodoPagoDesc: string | undefined = metodoPago.get(orden.metodoPago);
         const menuDesc: any = orden.menu.map((menuId: string) => {
             return getMenuDesc(menuId);
-        });
-        
-        return {
+        });    
+
+        const ordenResponse = {
             id: orden.id,
             hora: orden.hora,
             estatus: estatusDesc,
@@ -75,9 +117,36 @@ router.get('/', function (req: Request, res: Response) {
             costo: orden.costo,
             direccionEnvio: orden.direccionEnvio,
         }
+
+        res.send({
+            status: 'ok',
+            data: ordenResponse
+        });
+    }
+})
+.post('/', preValidaOrden, function (req: Request, res: Response) {
+    // caso de usu (usuario final): Enviar orden al restaurante
+
+    /*
+    const orden: ordenRequestT = {
+        usuario: req.body.usuario,
+        direccionEnvio: req.body.direccionEnvio,
+        metodoPago: req.body.metodoPago,
+        menu: req.body.menu,
+        modificadores: req.body.modificadores,
+    } */
+
+    const { usuario, direccionEnvio, metodoPago, menu, modificadores } = req.body;
+
+    const orden: ordenRequestT = {usuario, direccionEnvio, metodoPago, menu, modificadores};
+
+    // se procede a enviar la peticion a la base de datos adjuntando la orden
+
+    res.send({
+        status: 'ok',
+        msg: 'Orden registrada'
     });
 
-    res.send(ordenResponse);
 })
 .delete('/:id', validaOrdenId, function (req: Request, res: Response) {
     // caso de uso (usuario final): Cancelar orden de pedido
@@ -87,7 +156,6 @@ router.get('/', function (req: Request, res: Response) {
     });
 });
 
-export default router;
 
 export type costoT = {
     totalPlatillos: number,
@@ -95,6 +163,14 @@ export type costoT = {
     subTotal: number,
     propina: number,
     total: number
+}
+
+type ordenRequestT = {
+    usuario: string,
+    direccionEnvio: string,
+    metodoPago: string,
+    menu: string[],
+    modificadores: string[],
 }
 
 export type ordenT = {
