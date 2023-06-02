@@ -1,9 +1,10 @@
-const express = require('express');
+import express, { NextFunction, Request, Response } from 'express';
 const router = express.Router();
 const {categoria, modificadores, menu} = require('../datos/menu');
 
-// caso de uso: ver menú
-export default router.get('/', function (req: any, res: any) {
+
+export default router.get('/', function (req: Request, res: Response) {
+    // caso de uso: ver menú
     const menuResponse = menu.map((_menu: any) => {
         const categoriaDesc = categoria[_menu.categoria];
         
