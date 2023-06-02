@@ -3,11 +3,13 @@ import logger from 'morgan';
 import menuRouter from './routes/menu';
 import ordenRouter from './routes/orden';
 import usuarioRouter from './routes/usuario';
+import bodyParser from 'body-parser';
 
 
 const app: Application = express();
 const PORT: number = 3000;
 
+app.use(bodyParser.json());
 app.use(logger('dev'));
 
 app.use('/menu', menuRouter);
