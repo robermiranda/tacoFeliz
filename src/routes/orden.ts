@@ -150,6 +150,12 @@ export default router.get('/', function (req: Request, res: Response) {
 })
 .delete('/:id', validaOrdenId, function (req: Request, res: Response) {
     // caso de uso (usuario final): Cancelar orden de pedido
+    // En este caso, tanto el usuario final como el usuario admin
+    // pueden cancelar un pedido.
+    // La diferencia esta en que el usuario admin puede cancelar cualquier
+    // orden de pedido, mientras que el usuario final unicamente puede
+    // cancelar una orden que le pertenezca a dicho usuario final. Un
+    // usuario final NO puede cancelar una orden de otro usuario final.
     res.send({
         status: 'ok',
         msg: 'Orden cancelada'
