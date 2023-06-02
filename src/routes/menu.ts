@@ -74,6 +74,17 @@ export default router.get('/', function (req: Request, res: Response) {
         }
     });
 })
+.delete('/:menuId', validaMenuId, function (req: Request, res: Response) {
+    // caso de uso (usuario admin): eliminar un menú
+
+    // se procede a enviar la peticion a la db
+
+    res.send({
+        status: 'ok',
+        msg: 'menú eliminado',
+        data: req.params.menuId
+    });
+})
 .get('/modificadores', function (req: Request, res: Response) {
     // devuleve la lista de modificadores
     // esta acción solo la puede ejecutar el usuario admin
@@ -252,6 +263,29 @@ function validaModificadorId (req: Request, res: Response, next: NextFunction) {
             res.status(400).send({
                 status: 'warn',
                 msg: 'Modificador NO encontrado'
+            });    
+        }
+    } 
+}
+
+function validaMenuId (req: Request, res: Response, next: NextFunction) {
+    
+    if ( ! req.params.menuId) {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'Se debe especificar el id del menu'
+        });
+    }
+    else {
+        const index: number = menu.findIndex((_menu: modificadorT) => {
+            return (_menu.id === req.params.menuId);
+        });
+
+        if (index > -1) next();
+        else {
+            res.status(400).send({
+                status: 'warn',
+                msg: 'Menú NO encontrado'
             });    
         }
     } 
