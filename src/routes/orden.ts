@@ -1,8 +1,20 @@
-const express = require('express');
+import express, { NextFunction, Request, Response } from 'express';
 const router = express.Router();
-const { ordenes, metodoPago, ordenEstatus } = require('../datos/orden');
+const { ordenes } = require('../datos/orden');
 const { menu, modificadores, categoria } = require('../datos/menu');
 const { usuarios } = require('../datos/usuario');
+
+const metodoPago = new Map([
+    ['1', 'contra entrega'],
+    ['2', 'tarjeta crédito']
+]);
+
+const ordenEstatus = new Map([
+    ['0', 'pre-orden'],
+    ['1', 'preparando'],
+    ['2', 'entregado'],
+    ['3', 'cancelado']
+]);
 
 function getMenuDesc (menuId: string) {
 
@@ -24,12 +36,31 @@ function getUsuarioDesc (usuarios: any[], usuarioId: string): string {
     return usuarioId;
 }
 
+function validaOrdenId (req: Request, res: Response, next: NextFunction) {
+    
+    if (req.params.id) {
+        const index: number = ordenes.findIndex((orden: ordenT) => orden.id === req.params.id);
+        if (index > -1) next();
+        else {
+            res.status(400).send({
+                status: 'warn',
+                msg: 'Orden NO encontrada'
+            });    
+        }
+    }
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'Se debe especificar el id de la orden'
+        });
+    }
+}
 
-router.get('/', function (req: any, res: any) {
+router.get('/', function (req: Request, res: Response) {
     
     const ordenResponse: ordenCompuestaT = ordenes.map((orden: ordenBasicaT) => {
-        const estatusDesc: string = ordenEstatus[orden.estatus];
-        const metodoPagoDesc: string = metodoPago[orden.metodoPago];
+        const estatusDesc: string | undefined = ordenEstatus.get(orden.estatus);
+        const metodoPagoDesc: string | undefined = metodoPago.get(orden.metodoPago);
         const menuDesc: any = orden.menu.map((menuId: string) => {
             return getMenuDesc(menuId);
         });
@@ -47,6 +78,13 @@ router.get('/', function (req: any, res: any) {
     });
 
     res.send(ordenResponse);
+})
+.delete('/:id', validaOrdenId, function (req: Request, res: Response) {
+    // caso de uso (usuario final): Cancelar orden de pedido
+    res.send({
+        status: 'ok',
+        msg: 'Orden cancelada'
+    });
 });
 
 export default router;
