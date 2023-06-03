@@ -1,5 +1,4 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { usuarios, tipoUsuario, estatusUsuario } from '../datos/usuario';
 import axios from 'axios';
 
 
