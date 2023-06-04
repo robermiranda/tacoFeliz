@@ -1,5 +1,9 @@
 import express, { NextFunction, Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+
 const router = express.Router();
+const prisma = new PrismaClient();
 const {categoria, modificadores, menu} = require('../datos/menu');
 
 const NOTAS_LONG_MAX: number = 80;
@@ -85,13 +89,25 @@ export default router.get('/', function (req: Request, res: Response) {
         data: req.params.menuId
     });
 })
-.get('/modificadores', function (req: Request, res: Response) {
+.get('/modificadores', async function (req: Request, res: Response) {
     // devuleve la lista de modificadores
     // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: modificadores
-    })
+
+    try {
+        const modificadores = await prisma.modificadores.findMany();
+        res.send({
+            status: 'ok',
+            msg: `modificadores obtenidos: ${modificadores.length}`,
+            data: modificadores
+        });
+    }
+    catch (err) {
+        console.error('ERROR al obtener todos los usuarios', err);
+        res.status(500).send({
+            status: 'error',
+            msg: 'ERROR al obtener lista de modificadores'
+        });
+    }
 })
 .post('/modificadores', validaModificador, function (req: Request, res: Response) {
     // caso de uso (usuario admin): dar de alta un modificador
