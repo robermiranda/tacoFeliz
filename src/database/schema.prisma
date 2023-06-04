@@ -19,9 +19,22 @@ model usuarios {
     apMaterno   String? 
 }
 
+
 model modificadores {
     id              String  @id @default(auto()) @map("_id") @db.ObjectId
     nombre          String  @unique
     disponibilidad  Boolean @default(true)
     precio          Float
+}
+
+
+model menu {
+    id              String  @id @default(auto()) @map("_id") @db.ObjectId
+    categoria       String
+    nombre          String @unique
+    notas           String?
+    precio          Float
+    disponibilidad  Boolean @default(true)
+    imagen          String?
+    modificadores   Json?
 }

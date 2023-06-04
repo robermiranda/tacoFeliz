@@ -9,25 +9,33 @@ const {categoria, modificadores, menu} = require('../datos/menu');
 const NOTAS_LONG_MAX: number = 80;
 const NOMBRE_LONG_MAX: number = 40;
 const PRECIO_MIN: number = 0;
+const CATEGORIAS: string[] = ["ENTRADA", "PLATO FUERTE", "BEBIDA", "POSTRE"];
 
-export default router.get('/', function (req: Request, res: Response) {
-    // devuleve la lista de menú
-    // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: menu
-    })
-})
-.get('/', function (req: Request, res: Response) {
-    // devuleve la lista de modificadores
-    // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: menu
-    })
+
+export default router.get('/', async function (req: Request, res: Response) {
+    // usuario Adimin
+    // Obtiene la lista de menu
+
+    try {
+        const menu = await prisma.menu.findMany();
+        res.send({
+            status: 'ok',
+            msg: `menus obtenidos: ${menu.length}`,
+            data: menu
+        });
+    }
+    catch (err) {
+        console.error('ERROR al obtener todos los usuarios', err);
+        res.status(500).send({
+            status: 'error',
+            msg: 'ERROR al obtener lista de modificadores'
+        });
+    }
 })
 .get('/detalle', function (req: Request, res: Response) {
     // caso de uso (usuario final): ver menú
+    // para este caso hay que proporcionar el nombre del menu para obtener el detalle
+    // el detalle solo de ese menu.
     const menuResponse = menu.map((_menu: any) => {
         const categoriaDesc = categoria[_menu.categoria];
         
@@ -48,20 +56,44 @@ export default router.get('/', function (req: Request, res: Response) {
         data: menuResponse
     });
 })
-.post('/', validaMenu, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): dar de alta un modificador
+.post('/', validaMenu, async function (req: Request, res: Response) {
+    // usuario: Admin
+    // caso de uso: dar de alta un modificador
+
     const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
 
-    // se procede a enviar a la db el nuevo menú
-    // Se delega a la db validar la existencia de los modificadores y la validación de las categorias
 
-    res.send({
-        status: 'ok',
-        msg: 'menu agregado',
-        data: {
-            categoria, nombre, notas, precio, disponibilidad, modificadores, imagen
-        }
-    });
+    const datos: any = {
+        nombre,
+        categoria: categoria.toUpperCase(),
+        precio,
+        disponibilidad: getBooleanVal(disponibilidad),
+    }
+
+    if (notas) datos.notas = notas;
+    if (modificadores) datos.modificadores = modificadores;
+    if (imagen) datos.imagen = imagen;
+
+    const menu: menuT = datos;
+
+    try {
+        await prisma.menu.create({
+            data: menu
+        });
+
+        res.send({
+            status: 'ok'
+        });
+    }
+    catch (err) {
+        console.error('ERROR al insertar modificador', menu.nombre, err);
+        res.status(500).send({
+            status: 'error',
+            msg: 'modificador NO registrado'
+        });
+    }
+
+
 })
 .patch('/', validaMenuParaEditar, function (req: Request, res: Response) {
     // caso de uso (usuario admin): editar un menú
@@ -78,20 +110,32 @@ export default router.get('/', function (req: Request, res: Response) {
         }
     });
 })
-.delete('/:menuId', validaMenuId, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): eliminar un menú
+.delete('/:nombre', validaNombre, async function (req: Request, res: Response) {
+    // usuario admin
+    // caso de uso: Eliminar un menú
 
-    // se procede a enviar la peticion a la db
+    try {
+        const eliminado = await prisma.menu.delete({
+            where: {
+                nombre: req.params.nombre
+            }
+        });
 
-    res.send({
-        status: 'ok',
-        msg: 'menú eliminado',
-        data: req.params.menuId
-    });
+        res.send({
+            status: 'ok',
+            msg: `Menu eliminado ${eliminado.nombre}`
+        });
+    }
+    catch (err: any) {
+        res.status(500).send({
+            status: 'error',
+            msg: `ERROR. Menu ${req.params.nombre} NO eliminado. ${err.meta.cause}`
+        });
+    }
 })
 .get('/modificadores', async function (req: Request, res: Response) {
+    // usuario Admin
     // devuleve la lista de modificadores
-    // esta acción solo la puede ejecutar el usuario admin
 
     try {
         const modificadores = await prisma.modificadores.findMany();
@@ -203,6 +247,16 @@ type modificadorT = {
     disponibilidad: boolean
 }
 
+type menuT = {
+    id?:            string,
+    categoria:      string,
+    nombre:         string,
+    notas?:         string,
+    precio:         number,
+    disponibilidad: boolean,
+    modificadores?: any,
+    imagen?:        string
+}
 
 // Funciones Auxiliares  ******************************************************
 /*
@@ -227,20 +281,31 @@ function validaModificador (req: Request, res: Response, next: NextFunction) {
     }
 }*/
 
+function validaNombre (req: Request, res: Response, next: NextFunction) {
+    if (req.params.nombre) return next();
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'Se debe proporcionar el nombre del menú'
+        });
+    }
+}
+
 function validaMenu (req: Request, res: Response, next: NextFunction) {
-    const {categoria, nombre, notas, precio, disponibilidad, modificadores} = req.body;
+    const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
     const _precio = Number.parseFloat(precio);
 
-    if (categoria &&
-        disponibilidad && 
-        nombre &&
-        nombre.length <= NOMBRE_LONG_MAX &&
-        _precio &&
-        ! Number.isNaN(_precio) &&
-        _precio >= PRECIO_MIN &&
+    const aux = CATEGORIAS.findIndex(categoria => categoria === categoria.toUpperCase());
+
+    console.log('CATEGORIA INDEX', aux, aux > -1, categoria.toUpperCase(), CATEGORIAS[0]);
+    if (nombre && nombre.length <= NOMBRE_LONG_MAX &&
+        CATEGORIAS.findIndex(cat => cat.toUpperCase() === categoria.toUpperCase()) > -1 &&
+        ! Number.isNaN(_precio) && _precio >= PRECIO_MIN &&
+        disponibilidad &&
         ( ! notas || (notas && notas.length <= NOTAS_LONG_MAX)) &&
-        (! modificadores || (Array.isArray(modificadores) && modificadores.length > 0))) {
-        
+        ( ! modificadores || (Array.isArray(modificadores) && modificadores.length > 0)) &&
+        ( ! imagen || (imagen && imagen.length <= 200))) {
+
         next();
     }
     else {
