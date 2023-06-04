@@ -5,7 +5,7 @@ import rutaMenu from './routes/menu';
 import rutaOrden from './routes/orden';
 import rutaUsuario from './routes/usuario';
 import rutaSesion from './routes/sesion';
-
+import 'dotenv/config';
 
 const app: Application = express();
 const PORT: number = 3000;
