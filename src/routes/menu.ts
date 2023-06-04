@@ -109,21 +109,34 @@ export default router.get('/', function (req: Request, res: Response) {
         });
     }
 })
-.post('/modificadores', validaModificador, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): dar de alta un modificador
-    const nombre: string = req.body.nombre;
-    const precio: number = Number.parseFloat(req.body.precio);
-    const disponibilidad: boolean = req.body.disponibilidad;
+.post('/modificadores', async function (req: Request, res: Response) {
+    // usuario admin
+    // caso de uso: dar alta a un modificador
 
-    // se procede a enviar a la db el nuevo modificador
+    const { nombre, disponibilidad, precio } = req.body;
 
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            nombre, precio, disponibilidad
-        }
-    });
+    const modificador: modificadorT = {
+        nombre,
+        disponibilidad: getBooleanVal(disponibilidad),
+        precio
+    }
+
+    try {
+        await prisma.modificadores.create({
+            data: modificador
+        });
+
+        res.send({
+            status: 'ok'
+        });
+    }
+    catch (err) {
+        console.error('ERROR al insertar modificador', modificador.nombre, err);
+        res.status(500).send({
+            status: 'error',
+            msg: 'modificador NO registrado'
+        });
+    }
 })
 .delete('/modificadores/:modificadorId', validaModificadorId, function (req: Request, res: Response) {
     // caso de uso (usuario admin): eliminar un modificador
@@ -159,7 +172,7 @@ export default router.get('/', function (req: Request, res: Response) {
 // Declaración de tipos  ******************************************************
 
 type modificadorT = {
-    id: string,
+    id?: string,
     nombre: string,
     precio: number,
     disponibilidad: boolean
@@ -167,7 +180,7 @@ type modificadorT = {
 
 
 // Funciones Auxiliares  ******************************************************
-
+/*
 function validaModificador (req: Request, res: Response, next: NextFunction) {
     const {nombre, precio, disponibilidad} = req.body;
     const _precio = Number.parseFloat(precio);
@@ -187,7 +200,7 @@ function validaModificador (req: Request, res: Response, next: NextFunction) {
             msg: `Son obligatorios los datos: nombre.length <= ${NOMBRE_LONG_MAX}, precio > ${PRECIO_MIN} y disponibilidad`
         });
     }
-}
+}*/
 
 function validaMenu (req: Request, res: Response, next: NextFunction) {
     const {categoria, nombre, notas, precio, disponibilidad, modificadores} = req.body;
@@ -306,3 +319,5 @@ function validaMenuId (req: Request, res: Response, next: NextFunction) {
         }
     } 
 }
+
+const getBooleanVal = (val: string) => (val === 'true');
