@@ -21,6 +21,7 @@ model usuarios {
 
 model modificadores {
     id              String  @id @default(auto()) @map("_id") @db.ObjectId
-    nombre          String
+    nombre          String  @unique
     disponibilidad  Boolean @default(true)
+    precio          Float
 }
