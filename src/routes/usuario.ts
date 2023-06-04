@@ -1,5 +1,4 @@
 import express, { NextFunction, Request, Response } from 'express';
-import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
 
 
