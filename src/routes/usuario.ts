@@ -19,7 +19,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         const usuarios = await prisma.usuarios.findMany();
         res.send({
             status: 'ok',
-            msg: `Documentos obtenidos: ${usuarios.length}`,
+            msg: `usuarios obtenidos: ${usuarios.length}`,
             data: usuarios
         });
     }
