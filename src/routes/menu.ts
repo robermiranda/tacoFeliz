@@ -139,34 +139,42 @@ export default router.get('/', function (req: Request, res: Response) {
     }
 })
 .delete('/modificadores/:modificadorId', validaModificadorId, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): eliminar un modificador
+    // usuario admin
+    // caso de uso: eliminar un modificador
 
-    // se procede a enviar la peticion a la db
 
-    res.send({
-        status: 'ok',
-        msg: 'modificador eliminado',
-        data: req.params.modificadorId
-    });
 })
-.patch('/modificadores', validaModificadorParaEditar, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): editar un modificador
+.patch('/modificadores', validaModificadorParaEditar, async function (req: Request, res: Response) {
+    // usuario admin
+    // caso de uso: editar un modificador
 
-    const modificadorId = req.body.modificadorId;
-    const nombre: string = req.body.nombre;
-    const precio: number = Number.parseFloat(req.body.precio);
-    const disponibilidad: boolean = req.body.disponibilidad;
+    const { nombre, disponibilidad, precio } = req.body;
+    const modificador: any = {}
 
-    // se procede a enviar a la db el nuevo modificador
-    // se da a la db la responsabilidad de verificar que existe modificador para id = modificadorId
+    if (disponibilidad) modificador.disponibilidad = getBooleanVal(disponibilidad);
+    if (precio) modificador.precio = Number.parseFloat(precio);
 
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            modificadorId, nombre, precio, disponibilidad
-        }
-    });
+    try {
+        await prisma.modificadores.update({
+            where: {
+                nombre: nombre
+            },
+            data: modificador
+        });
+
+        res.send({
+            status: 'ok',
+            msg: 'modificador actualizado'
+        });
+    }
+    catch (err) {
+        const msg = `ERROR al actualizar modificador ${nombre}`;
+        console.error(msg, err);
+        res.status(500).send({
+            status: 'error',
+            msg
+        });
+    }
 });
 
 // Declaración de tipos  ******************************************************
@@ -231,21 +239,20 @@ function validaMenu (req: Request, res: Response, next: NextFunction) {
     }
 }
 
+
 function validaModificadorParaEditar (req: Request, res: Response, next: NextFunction) {
-    const {modificadorId, nombre, precio, disponibilidad} = req.body;
+    const {nombre, precio, disponibilidad} = req.body;
     const _precio = Number.parseFloat(precio);
 
-    if ((nombre || _precio || disponibilidad) &&
-        modificadorId &&
-        ( ! nombre || nombre.length <= NOMBRE_LONG_MAX) &&
-        ( ! precio || ( ! Number.isNaN(_precio) && _precio >= PRECIO_MIN))) {
-
+    if (nombre && (disponibilidad ||
+        ( ! Number.isNaN(_precio) && _precio >= 0))) {
+    
         next();
     }
     else {
         res.status(400).send({
             status: 'warn',
-            msg: `El modificadorId es obligatorio y almenos uno de los siguientes datos son obligatorios: nombre.length <= ${NOMBRE_LONG_MAX}, precio > ${PRECIO_MIN} y disponibilidad`
+            msg: `Datos obligatorios: nombre y (precio >= 0 o disponibilidad)`
         });
     }
 }
