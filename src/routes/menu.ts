@@ -138,11 +138,28 @@ export default router.get('/', function (req: Request, res: Response) {
         });
     }
 })
-.delete('/modificadores/:modificadorId', validaModificadorId, function (req: Request, res: Response) {
+.delete('/modificadores/:nombre', validaModificadorNombre, async function (req: Request, res: Response) {
     // usuario admin
     // caso de uso: eliminar un modificador
 
+    try {
+        const eliminado = await prisma.modificadores.delete({
+            where: {
+                nombre: req.params.nombre
+            }
+        });
 
+        res.send({
+            status: 'ok',
+            msg: `Modificador eliminado ${eliminado.nombre}`
+        });
+    }
+    catch (err: any) {
+        res.status(500).send({
+            status: 'error',
+            msg: `ERROR. Modificador NO eliminado. ${err.meta.cause}`
+        });
+    }
 })
 .patch('/modificadores', validaModificadorParaEditar, async function (req: Request, res: Response) {
     // usuario admin
@@ -282,25 +299,13 @@ function validaMenuParaEditar (req: Request, res: Response, next: NextFunction) 
     }
 }
 
-function validaModificadorId (req: Request, res: Response, next: NextFunction) {
-    
-    if ( ! req.params.modificadorId) {
+function validaModificadorNombre (req: Request, res: Response, next: NextFunction) {
+    if (req.params.nombre) next();
+    else {
         res.status(400).send({
             status: 'warn',
-            msg: 'Se debe especificar el id del modificador'
+            msg: 'Se debe especificar el nombre del modificador'
         });
-    }
-    else {
-        const index: number = modificadores.findIndex((modificador: modificadorT) => {
-            return (modificador.id === req.params.modificadorId);
-        });
-        if (index > -1) next();
-        else {
-            res.status(400).send({
-                status: 'warn',
-                msg: 'Modificador NO encontrado'
-            });    
-        }
     } 
 }
 
