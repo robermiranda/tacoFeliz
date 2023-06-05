@@ -1,0 +1,70 @@
+// With this index the field nombre must be unique
+db.modificadores.createIndex({ "nombre": 1 }, { unique: true })
+
+db.menu.createIndex({ "nombre": 1 }, { unique: true })
+
+
+db.createCollection("modificadores", {
+	validator: {
+		$jsonSchema: {	
+			bsonType: "object",
+			required: ["nombre", "disponibilidad", "precio"],
+			properties: {
+				nombre: {
+					bsonType: "string",
+					maxLength: 40,
+			        description: "Nombre del modificador"		
+				},
+				disponibilidad: {
+					bsonType: "bool",
+			        description: "true si el modificador se puede ordenar; false en otro caso"
+				},
+				precio: {
+					bsonType: "number",
+					minimum: 0,
+			        description: "Precio del modificador"
+				},
+			}
+		}
+	}
+})
+
+
+db.createCollection("menu", {
+	validator: {
+		$jsonSchema: {	
+			bsonType: "object",
+			required: ["nombre", "categoria", "disponibilidad", "precio"],
+			properties: {
+				nombre: {
+					bsonType: "string",
+					maxLength: 40,
+			        description: "Nombre del menu"		
+				},
+				categoria: {
+					bsonType: "string",
+					description: "categoria del menu: entrada, plato fuerte, postre, bebida"
+				},
+				notas: {
+					bsonType: ["string"],
+					maxLength: 80,
+			        description: "Notas al menu"		
+				},
+				disponibilidad: {
+					bsonType: "bool",
+			        description: "true si el menu se puede ordenar; false en otro caso"
+				},
+				precio: {
+					bsonType: "number",
+					minimum: 0,
+			        description: "Precio del menu"
+				},
+				imagen: {
+					bsonType: ["string"],
+					maxLength: 200,
+					description: "url de la imagen"
+				}
+			}
+		}
+	}
+})
