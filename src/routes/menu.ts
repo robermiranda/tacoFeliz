@@ -4,7 +4,6 @@ import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const {categoria, modificadores, menu} = require('../datos/menu');
 
 const NOTAS_LONG_MAX: number = 80;
 const NOMBRE_LONG_MAX: number = 40;
@@ -25,7 +24,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
     catch (err) {
-        console.error('ERROR al obtener la lista de menú', err);
+        // console.error('ERROR al obtener la lista de menú', err);
         res.status(500).send({
             status: 'error',
             msg: 'ERROR al obtener lista de menú'
@@ -57,7 +56,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         }
     }
     catch (err) {
-        console.error('ERROR al obtener el menú', err);
+        // console.error('ERROR al obtener el menú', err);
         res.status(500).send({
             status: 'error',
             msg: 'ERROR al obtener el menú'
@@ -93,7 +92,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
     catch (err) {
-        console.error('ERROR al insertar modificador', menu.nombre, err);
+        // console.error('ERROR al insertar modificador', menu.nombre, err);
         res.status(500).send({
             status: 'error',
             msg: 'modificador NO registrado'
@@ -106,13 +105,14 @@ export default router.get('/', async function (req: Request, res: Response) {
     // usuario admin
     // caso de uso: editar un menú
 
-    const {nombre, categoria, notas, precio, disponibilidad, imagen} = req.body;
+    const {nombre, categoria, notas, precio, disponibilidad, modificadores, imagen} = req.body;
     const menu: any = {}
 
     if (disponibilidad) menu.disponibilidad = getBooleanVal(disponibilidad);
     if (precio) menu.precio = Number.parseFloat(precio);
     if (categoria) menu.categoria = categoria;
     if (notas) menu.notas = notas;
+    if (modificadores) menu.modificadores = modificadores;
     if (imagen) menu.imagen = imagen;
 
     try {
@@ -122,15 +122,10 @@ export default router.get('/', async function (req: Request, res: Response) {
             },
             data: menu
         });
-
-        res.send({
-            status: 'ok',
-            msg: 'menú actualizado'
-        });
     }
-    catch (err) {
-        const msg = `ERROR al actualizar menú ${nombre}`;
-        console.error(msg, err);
+    catch (err: any) {
+        const msg = `ERROR al actualizar menú ${nombre}. ${err.meta.cause}`;
+        // console.error(msg, err);
         res.status(500).send({
             status: 'error',
             msg
@@ -173,7 +168,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
     catch (err) {
-        console.error('ERROR al obtener todos los usuarios', err);
+        // console.error('ERROR al obtener todos los usuarios', err);
         res.status(500).send({
             status: 'error',
             msg: 'ERROR al obtener lista de modificadores'
@@ -202,7 +197,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
     catch (err) {
-        console.error('ERROR al insertar modificador', modificador.nombre, err);
+        // console.error('ERROR al insertar modificador', modificador.nombre, err);
         res.status(500).send({
             status: 'error',
             msg: 'modificador NO registrado'
@@ -257,7 +252,7 @@ export default router.get('/', async function (req: Request, res: Response) {
     }
     catch (err) {
         const msg = `ERROR al actualizar modificador ${nombre}`;
-        console.error(msg, err);
+        // console.error(msg, err);
         res.status(500).send({
             status: 'error',
             msg
@@ -286,37 +281,6 @@ type menuT = {
 }
 
 // Funciones Auxiliares  ******************************************************
-/*
-function validaModificador (req: Request, res: Response, next: NextFunction) {
-    const {nombre, precio, disponibilidad} = req.body;
-    const _precio = Number.parseFloat(precio);
-
-    if (disponibilidad && 
-        nombre &&
-        nombre.length <= NOMBRE_LONG_MAX &&
-        _precio &&
-        ! Number.isNaN(_precio) &&
-        _precio >= PRECIO_MIN) {
-        
-        next();
-    }
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: `Son obligatorios los datos: nombre.length <= ${NOMBRE_LONG_MAX}, precio > ${PRECIO_MIN} y disponibilidad`
-        });
-    }
-}*/
-
-function validaNombre (req: Request, res: Response, next: NextFunction) {
-    if (req.params.nombre) return next();
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'Se debe proporcionar el nombre del menú'
-        });
-    }
-}
 
 function validaNombreCategoria (categoria: string) {
     const index = CATEGORIAS.findIndex(cat => {
@@ -332,28 +296,39 @@ function validaPrecio (_precio: string) {
 }
 
 function validaModificadores (modificadores: string[]) {
-    return (Array.isArray(modificadores) && modificadores.length > 0);
+    const valida = (Array.isArray(modificadores) && modificadores.length > 0);
+    return valida;
+}
+
+function validaDisponibilidad (disponibilidad: string) {
+    return (typeof disponibilidad === 'string' &&
+        (disponibilidad.toUpperCase() === 'TRUE' ||
+        disponibilidad.toUpperCase() === 'FALSE'));
 }
 
 const validaNotas =(notas: string) => (notas.length <= NOTAS_LONG_MAX);
 
-function validaDisponibilidad (disponibilidad: string) {
-    return (disponibilidad.toUpperCase() === 'TRUE' ||
-        disponibilidad.toUpperCase() === 'FALSE');
+const getBooleanVal = (val: string) => (val === 'true');
+
+function validaNombre (req: Request, res: Response, next: NextFunction) {
+    if (req.params.nombre) return next();
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: 'Se debe proporcionar el nombre del menú'
+        });
+    }
 }
 
 function validaMenu (req: Request, res: Response, next: NextFunction) {
     const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
-    const _precio = Number.parseFloat(precio);
-
-    const aux = CATEGORIAS.findIndex(categoria => categoria === categoria.toUpperCase());
 
     if (nombre && nombre.length <= NOMBRE_LONG_MAX &&
-        CATEGORIAS.findIndex(cat => cat.toUpperCase() === categoria.toUpperCase()) > -1 &&
-        ! Number.isNaN(_precio) && _precio >= PRECIO_MIN &&
-        disponibilidad &&
-        ( ! notas || (notas && notas.length <= NOTAS_LONG_MAX)) &&
-        ( ! modificadores || (Array.isArray(modificadores) && modificadores.length > 0)) &&
+        validaNombreCategoria(categoria) &&
+        validaPrecio(precio) &&
+        validaDisponibilidad(disponibilidad) &&
+        ( ! notas || validaNotas(notas)) &&
+        ( ! modificadores || validaModificadores(modificadores)) &&
         ( ! imagen || (imagen && imagen.length <= 200))) {
 
         next();
@@ -373,14 +348,15 @@ function validaMenu (req: Request, res: Response, next: NextFunction) {
 
 function validaMenuParaEditar (req: Request, res: Response, next: NextFunction) {
 
-    const {nombre, categoria, notas, precio, disponibilidad, modificadores} = req.body;
+    const {nombre, categoria, notas, precio, disponibilidad, modificadores, imagen} = req.body;
 
     if (nombre &&
         ( ! disponibilidad || validaDisponibilidad(disponibilidad)) &&
         ( ! categoria || validaNombreCategoria(categoria)) &&
         ( ! notas || validaNotas(notas)) &&
         ( ! precio || validaPrecio(precio)) &&
-        ( ! modificadores || validaModificadores(modificadores))) {
+        ( ! modificadores || validaModificadores(modificadores)) &&
+        ( ! imagen || (imagen && imagen.length <= 200))) {
 
         next();
     }
@@ -423,28 +399,3 @@ function validaModificadorNombre (req: Request, res: Response, next: NextFunctio
         });
     } 
 }
-
-function validaMenuId (req: Request, res: Response, next: NextFunction) {
-    
-    if ( ! req.params.menuId) {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'Se debe especificar el id del menu'
-        });
-    }
-    else {
-        const index: number = menu.findIndex((_menu: modificadorT) => {
-            return (_menu.id === req.params.menuId);
-        });
-
-        if (index > -1) next();
-        else {
-            res.status(400).send({
-                status: 'warn',
-                msg: 'Menú NO encontrado'
-            });    
-        }
-    } 
-}
-
-const getBooleanVal = (val: string) => (val === 'true');
