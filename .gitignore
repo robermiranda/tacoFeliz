@@ -5,3 +5,5 @@ package-lock.json
 .env
 
 src/datos/
+
+README.md.backup
