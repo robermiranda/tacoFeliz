@@ -13,20 +13,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const axios_1 = __importDefault(require("axios"));
 const client_1 = require("@prisma/client");
-const URL_BASE = 'https://us-east-1.aws.data.mongodb-api.com/app/taco-feliz-uaepm/endpoint/usuarios';
+const TIPO_USUARIO = {
+    final: 'FINAL',
+    admin: 'SUPER_ADMIN'
+};
+const ESTATUS = {
+    activo: 'ACTIVO',
+    bloquedao: 'BLOQUEADO'
+};
 const prisma = new client_1.PrismaClient();
 const router = express_1.default.Router();
 exports.default = router.get('/', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const usuarios = yield prisma.usuarios.findMany();
-            console.log('USUARIOS', usuarios);
-            res.send(usuarios);
+            res.send({
+                status: 'ok',
+                msg: `usuarios obtenidos: ${usuarios.length}`,
+                data: usuarios
+            });
         }
         catch (err) {
             console.error('ERROR al obtener todos los usuarios', err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'ERROR al obtener los usuarios'
+            });
         }
     });
 })
@@ -36,16 +49,21 @@ exports.default = router.get('/', function (req, res) {
         // caso de uso: Registro en aplicación
         const usuario = {
             email: req.body.email,
-            tipo: 'USUARIO_FINAL',
-            estatus: 'ACTIVO',
+            tipo: TIPO_USUARIO.final,
+            estatus: ESTATUS.activo,
             password: req.body.password,
             nombre: req.body.nombre,
-            apPaterno: req.body.apPaterno,
-            apMaterno: req.body.apMaterno
         };
+        if (req.body.apPaterno)
+            usuario.apPaterno = req.body.apPaterno;
+        if (req.body.apMaterno)
+            usuario.apMaterno = req.body.apMaterno;
         try {
             yield prisma.usuarios.create({
                 data: usuario
+            });
+            res.send({
+                status: 'ok'
             });
         }
         catch (err) {
@@ -55,54 +73,48 @@ exports.default = router.get('/', function (req, res) {
                 msg: 'usuario NO registrado'
             });
         }
-        /*
-        axios.post(URL_BASE, {
-            nombre: req.body.nombre,
-            apPaterno: req.body.apPaterno,
-            apMaterno: req.body.apMaterno,
-            email:  req.body.email,
-            password: req.body.password
-        })
-        .then(response => {
-            res.send(response.data);
-        })
-        .catch(err => {
-            console.error('ERROR al registrar usuario', req.body.nombre);
-            res.status(500).send({
-                status: 'error',
-                msg: 'usuario NO registrado'
-            });
-        });*/
     });
 })
     .patch('/', function (req, res) {
-    // caso de uso (usuario admin): bloquear usuario
-    // se procede a llamar al endpoint de la base de datos para cancelar al usuario
-    // para lo cual se debe proporcionar dos parametros:
-    // email del usuario a eliminar y también el usuario del admin
-    //  recuerdese que solo el usuario admin puede bloquear usuarios
-    axios_1.default.patch(URL_BASE, {
-        emailUsuario: req.body.emailUsuario,
-        emailAdmin: req.body.emailAdmin
-    })
-        .then(response => {
-        res.send(response.data);
-    })
-        .catch(err => {
-        console.error('ERROR al bloquear usuario', req.body.nombre);
-        res.status(500).send({
-            status: 'error',
-            msg: 'usuario NO bloqueado'
-        });
+    return __awaiter(this, void 0, void 0, function* () {
+        // caso de uso (usuario admin): bloquear usuario
+        // se procede a llamar al endpoint de la base de datos para cancelar al usuario
+        // para lo cual se debe proporcionar dos parametros:
+        // email del usuario a eliminar: emailUsuario
+        // recuerdese que solo el usuario admin puede bloquear usuarios
+        try {
+            const bloqueado = yield prisma.usuarios.update({
+                where: {
+                    email: req.body.emailUsuario
+                },
+                data: {
+                    estatus: ESTATUS.bloquedao
+                }
+            });
+            res.send({
+                status: 'ok',
+                msg: 'usuario bloqueado'
+            });
+        }
+        catch (err) {
+            const msg = `ERROR al bloquear usuario ${req.body.emailUsuario}`;
+            console.error(msg, err);
+            res.status(500).send({
+                status: 'error',
+                msg
+            });
+        }
     });
 });
 function validaUsuario(req, res, next) {
-    const nombre = req.body.nombre;
-    const apPaterno = req.body.apPaterno;
-    const email = req.body.email;
-    const password = req.body.password;
-    if (nombre && apPaterno && email && password)
+    const LENGTH = 40;
+    const { nombre, apPaterno, email, password } = req.body;
+    if (nombre && nombre.length <= LENGTH &&
+        apPaterno && apPaterno.length <= LENGTH &&
+        email && email.length <= LENGTH &&
+        password && password.length <= LENGTH) {
         next();
+    }
     else
         res.status(400).send({
             status: 'warn',

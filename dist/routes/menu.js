@@ -1,157 +1,316 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const client_1 = require("@prisma/client");
 const router = express_1.default.Router();
-const { categoria, modificadores, menu } = require('../datos/menu');
+const prisma = new client_1.PrismaClient();
 const NOTAS_LONG_MAX = 80;
 const NOMBRE_LONG_MAX = 40;
 const PRECIO_MIN = 0;
+const CATEGORIAS = ["ENTRADA", "PLATO FUERTE", "BEBIDA", "POSTRE"];
 exports.default = router.get('/', function (req, res) {
-    // devuleve la lista de menú
-    // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: menu
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario Adimin
+        // Obtiene la lista de menu
+        try {
+            const menu = yield prisma.menu.findMany();
+            res.send({
+                status: 'ok',
+                msg: `menus obtenidos: ${menu.length}`,
+                data: menu
+            });
+        }
+        catch (err) {
+            // console.error('ERROR al obtener la lista de menú', err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'ERROR al obtener lista de menú'
+            });
+        }
     });
 })
-    .get('/', function (req, res) {
-    // devuleve la lista de modificadores
-    // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: menu
-    });
-})
-    .get('/detalle', function (req, res) {
-    // caso de uso (usuario final): ver menú
-    const menuResponse = menu.map((_menu) => {
-        const categoriaDesc = categoria[_menu.categoria];
-        const modificadoresDesc = _menu.modificadores.map((modificadorId) => {
-            return modificadores.find((modificador) => modificador.id === modificadorId);
-        });
-        return Object.assign(Object.assign({}, _menu), { categoria: categoriaDesc, modificadores: modificadoresDesc });
-    });
-    res.send({
-        status: 'ok',
-        data: menuResponse
+    .get('/:nombre', function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuarios: admin y final
+        // caso de uso: ver menú cuyo nombre es ':nombre'
+        try {
+            const menu = yield prisma.menu.findUnique({
+                where: {
+                    nombre: req.params.nombre
+                }
+            });
+            if (menu) {
+                res.send({
+                    status: 'ok',
+                    data: menu
+                });
+            }
+            else {
+                res.send({
+                    status: 'warm',
+                    msg: `Sin resultados para el menu: ${req.params.nombre}`
+                });
+            }
+        }
+        catch (err) {
+            // console.error('ERROR al obtener el menú', err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'ERROR al obtener el menú'
+            });
+        }
     });
 })
     .post('/', validaMenu, function (req, res) {
-    // caso de uso (usuario admin): dar de alta un modificador
-    const { categoria, nombre, notas, precio, disponibilidad, modificadores, imagen } = req.body;
-    // se procede a enviar a la db el nuevo menú
-    // Se delega a la db validar la existencia de los modificadores y la validación de las categorias
-    res.send({
-        status: 'ok',
-        msg: 'menu agregado',
-        data: {
-            categoria, nombre, notas, precio, disponibilidad, modificadores, imagen
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario: Admin
+        // caso de uso: dar de alta un modificador
+        const { categoria, nombre, notas, precio, disponibilidad, modificadores, imagen } = req.body;
+        const datos = {
+            nombre,
+            categoria: categoria.toUpperCase(),
+            precio,
+            disponibilidad: getBooleanVal(disponibilidad),
+        };
+        if (notas)
+            datos.notas = notas;
+        if (modificadores)
+            datos.modificadores = modificadores;
+        if (imagen)
+            datos.imagen = imagen;
+        const menu = datos;
+        try {
+            yield prisma.menu.create({
+                data: menu
+            });
+            res.send({
+                status: 'ok'
+            });
+        }
+        catch (err) {
+            // console.error('ERROR al insertar modificador', menu.nombre, err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'modificador NO registrado'
+            });
         }
     });
 })
     .patch('/', validaMenuParaEditar, function (req, res) {
-    // caso de uso (usuario admin): editar un menú
-    const { menuId, categoria, nombre, notas, precio, disponibilidad, modificadores, imagen } = req.body;
-    // se procede a enviar a la db los datos para editar el menú
-    // se da a la db la responsabilidad de verificar que existe menú para id = menuId
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            menuId, categoria, nombre, notas, precio, disponibilidad, modificadores, imagen
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // caso de uso: editar un menú
+        const { nombre, categoria, notas, precio, disponibilidad, modificadores, imagen } = req.body;
+        const menu = {};
+        if (disponibilidad)
+            menu.disponibilidad = getBooleanVal(disponibilidad);
+        if (precio)
+            menu.precio = Number.parseFloat(precio);
+        if (categoria)
+            menu.categoria = categoria;
+        if (notas)
+            menu.notas = notas;
+        if (modificadores)
+            menu.modificadores = modificadores;
+        if (imagen)
+            menu.imagen = imagen;
+        try {
+            yield prisma.menu.update({
+                where: {
+                    nombre: nombre
+                },
+                data: menu
+            });
+        }
+        catch (err) {
+            const msg = `ERROR al actualizar menú ${nombre}. ${err.meta.cause}`;
+            // console.error(msg, err);
+            res.status(500).send({
+                status: 'error',
+                msg
+            });
         }
     });
 })
-    .delete('/:menuId', validaMenuId, function (req, res) {
-    // caso de uso (usuario admin): eliminar un menú
-    // se procede a enviar la peticion a la db
-    res.send({
-        status: 'ok',
-        msg: 'menú eliminado',
-        data: req.params.menuId
+    .delete('/:nombre', validaNombre, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // caso de uso: Eliminar un menú
+        try {
+            const eliminado = yield prisma.menu.delete({
+                where: {
+                    nombre: req.params.nombre
+                }
+            });
+            res.send({
+                status: 'ok',
+                msg: `Menu eliminado ${eliminado.nombre}`
+            });
+        }
+        catch (err) {
+            res.status(500).send({
+                status: 'error',
+                msg: `ERROR. Menu ${req.params.nombre} NO eliminado. ${err.meta.cause}`
+            });
+        }
     });
 })
     .get('/modificadores', function (req, res) {
-    // devuleve la lista de modificadores
-    // esta acción solo la puede ejecutar el usuario admin
-    res.send({
-        status: 'ok',
-        data: modificadores
-    });
-})
-    .post('/modificadores', validaModificador, function (req, res) {
-    // caso de uso (usuario admin): dar de alta un modificador
-    const nombre = req.body.nombre;
-    const precio = Number.parseFloat(req.body.precio);
-    const disponibilidad = req.body.disponibilidad;
-    // se procede a enviar a la db el nuevo modificador
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            nombre, precio, disponibilidad
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario Admin
+        // devuleve la lista de modificadores
+        try {
+            const modificadores = yield prisma.modificadores.findMany();
+            res.send({
+                status: 'ok',
+                msg: `modificadores obtenidos: ${modificadores.length}`,
+                data: modificadores
+            });
+        }
+        catch (err) {
+            // console.error('ERROR al obtener todos los usuarios', err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'ERROR al obtener lista de modificadores'
+            });
         }
     });
 })
-    .delete('/modificadores/:modificadorId', validaModificadorId, function (req, res) {
-    // caso de uso (usuario admin): eliminar un modificador
-    // se procede a enviar la peticion a la db
-    res.send({
-        status: 'ok',
-        msg: 'modificador eliminado',
-        data: req.params.modificadorId
+    .post('/modificadores', function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // caso de uso: dar alta a un modificador
+        const { nombre, disponibilidad, precio } = req.body;
+        const modificador = {
+            nombre,
+            disponibilidad: getBooleanVal(disponibilidad),
+            precio
+        };
+        try {
+            yield prisma.modificadores.create({
+                data: modificador
+            });
+            res.send({
+                status: 'ok'
+            });
+        }
+        catch (err) {
+            // console.error('ERROR al insertar modificador', modificador.nombre, err);
+            res.status(500).send({
+                status: 'error',
+                msg: 'modificador NO registrado'
+            });
+        }
+    });
+})
+    .delete('/modificadores/:nombre', validaModificadorNombre, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // caso de uso: eliminar un modificador
+        try {
+            const eliminado = yield prisma.modificadores.delete({
+                where: {
+                    nombre: req.params.nombre
+                }
+            });
+            res.send({
+                status: 'ok',
+                msg: `Modificador eliminado ${eliminado.nombre}`
+            });
+        }
+        catch (err) {
+            res.status(500).send({
+                status: 'error',
+                msg: `ERROR. Modificador NO eliminado. ${err.meta.cause}`
+            });
+        }
     });
 })
     .patch('/modificadores', validaModificadorParaEditar, function (req, res) {
-    // caso de uso (usuario admin): editar un modificador
-    const modificadorId = req.body.modificadorId;
-    const nombre = req.body.nombre;
-    const precio = Number.parseFloat(req.body.precio);
-    const disponibilidad = req.body.disponibilidad;
-    // se procede a enviar a la db el nuevo modificador
-    // se da a la db la responsabilidad de verificar que existe modificador para id = modificadorId
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            modificadorId, nombre, precio, disponibilidad
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // caso de uso: editar un modificador
+        const { nombre, disponibilidad, precio } = req.body;
+        const modificador = {};
+        if (disponibilidad)
+            modificador.disponibilidad = getBooleanVal(disponibilidad);
+        if (precio)
+            modificador.precio = Number.parseFloat(precio);
+        try {
+            yield prisma.modificadores.update({
+                where: {
+                    nombre: nombre
+                },
+                data: modificador
+            });
+            res.send({
+                status: 'ok',
+                msg: 'modificador actualizado'
+            });
+        }
+        catch (err) {
+            const msg = `ERROR al actualizar modificador ${nombre}`;
+            // console.error(msg, err);
+            res.status(500).send({
+                status: 'error',
+                msg
+            });
         }
     });
 });
 // Funciones Auxiliares  ******************************************************
-function validaModificador(req, res, next) {
-    const { nombre, precio, disponibilidad } = req.body;
-    const _precio = Number.parseFloat(precio);
-    if (disponibilidad &&
-        nombre &&
-        nombre.length <= NOMBRE_LONG_MAX &&
-        _precio &&
-        !Number.isNaN(_precio) &&
-        _precio >= PRECIO_MIN) {
-        next();
-    }
+function validaNombreCategoria(categoria) {
+    const index = CATEGORIAS.findIndex(cat => {
+        return (cat.toUpperCase() === categoria.toUpperCase());
+    });
+    return (index > -1);
+}
+function validaPrecio(_precio) {
+    const precio = Number.parseFloat(_precio);
+    return (!Number.isNaN(precio) && precio >= PRECIO_MIN);
+}
+function validaModificadores(modificadores) {
+    const valida = (Array.isArray(modificadores) && modificadores.length > 0);
+    return valida;
+}
+function validaDisponibilidad(disponibilidad) {
+    return (typeof disponibilidad === 'string' &&
+        (disponibilidad.toUpperCase() === 'TRUE' ||
+            disponibilidad.toUpperCase() === 'FALSE'));
+}
+const validaNotas = (notas) => (notas.length <= NOTAS_LONG_MAX);
+const getBooleanVal = (val) => (val === 'true');
+function validaNombre(req, res, next) {
+    if (req.params.nombre)
+        return next();
     else {
         res.status(400).send({
             status: 'warn',
-            msg: `Son obligatorios los datos: nombre.length <= ${NOMBRE_LONG_MAX}, precio > ${PRECIO_MIN} y disponibilidad`
+            msg: 'Se debe proporcionar el nombre del menú'
         });
     }
 }
 function validaMenu(req, res, next) {
-    const { categoria, nombre, notas, precio, disponibilidad, modificadores } = req.body;
-    const _precio = Number.parseFloat(precio);
-    if (categoria &&
-        disponibilidad &&
-        nombre &&
-        nombre.length <= NOMBRE_LONG_MAX &&
-        _precio &&
-        !Number.isNaN(_precio) &&
-        _precio >= PRECIO_MIN &&
-        (!notas || (notas && notas.length <= NOTAS_LONG_MAX)) &&
-        (!modificadores || (Array.isArray(modificadores) && modificadores.length > 0))) {
+    const { categoria, nombre, notas, precio, disponibilidad, modificadores, imagen } = req.body;
+    if (nombre && nombre.length <= NOMBRE_LONG_MAX &&
+        validaNombreCategoria(categoria) &&
+        validaPrecio(precio) &&
+        validaDisponibilidad(disponibilidad) &&
+        (!notas || validaNotas(notas)) &&
+        (!modificadores || validaModificadores(modificadores)) &&
+        (!imagen || (imagen && imagen.length <= 200))) {
         next();
     }
     else {
@@ -166,30 +325,15 @@ function validaMenu(req, res, next) {
         });
     }
 }
-function validaModificadorParaEditar(req, res, next) {
-    const { modificadorId, nombre, precio, disponibilidad } = req.body;
-    const _precio = Number.parseFloat(precio);
-    if ((nombre || _precio || disponibilidad) &&
-        modificadorId &&
-        (!nombre || nombre.length <= NOMBRE_LONG_MAX) &&
-        (!precio || (!Number.isNaN(_precio) && _precio >= PRECIO_MIN))) {
-        next();
-    }
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: `El modificadorId es obligatorio y almenos uno de los siguientes datos son obligatorios: nombre.length <= ${NOMBRE_LONG_MAX}, precio > ${PRECIO_MIN} y disponibilidad`
-        });
-    }
-}
 function validaMenuParaEditar(req, res, next) {
-    const { menuId, categoria, nombre, notas, precio, disponibilidad, modificadores } = req.body;
-    const _precio = Number.parseFloat(precio);
-    if ((categoria || disponibilidad || nombre || _precio || notas || modificadores) &&
-        menuId &&
-        (!precio || (!Number.isNaN(_precio) && _precio >= PRECIO_MIN)) &&
-        (!notas || notas.length <= NOTAS_LONG_MAX) &&
-        (!modificadores || (Array.isArray(modificadores) && modificadores.length > 0))) {
+    const { nombre, categoria, notas, precio, disponibilidad, modificadores, imagen } = req.body;
+    if (nombre &&
+        (!disponibilidad || validaDisponibilidad(disponibilidad)) &&
+        (!categoria || validaNombreCategoria(categoria)) &&
+        (!notas || validaNotas(notas)) &&
+        (!precio || validaPrecio(precio)) &&
+        (!modificadores || validaModificadores(modificadores)) &&
+        (!imagen || (imagen && imagen.length <= 200))) {
         next();
     }
     else {
@@ -204,45 +348,27 @@ function validaMenuParaEditar(req, res, next) {
         });
     }
 }
-function validaModificadorId(req, res, next) {
-    if (!req.params.modificadorId) {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'Se debe especificar el id del modificador'
-        });
+function validaModificadorParaEditar(req, res, next) {
+    const { nombre, precio, disponibilidad } = req.body;
+    const _precio = Number.parseFloat(precio);
+    if (nombre && (disponibilidad ||
+        (!Number.isNaN(_precio) && _precio >= PRECIO_MIN))) {
+        next();
     }
     else {
-        const index = modificadores.findIndex((modificador) => {
-            return (modificador.id === req.params.modificadorId);
+        res.status(400).send({
+            status: 'warn',
+            msg: `Datos obligatorios: nombre y (precio >= 0 o disponibilidad)`
         });
-        if (index > -1)
-            next();
-        else {
-            res.status(400).send({
-                status: 'warn',
-                msg: 'Modificador NO encontrado'
-            });
-        }
     }
 }
-function validaMenuId(req, res, next) {
-    if (!req.params.menuId) {
+function validaModificadorNombre(req, res, next) {
+    if (req.params.nombre)
+        next();
+    else {
         res.status(400).send({
             status: 'warn',
-            msg: 'Se debe especificar el id del menu'
+            msg: 'Se debe especificar el nombre del modificador'
         });
-    }
-    else {
-        const index = menu.findIndex((_menu) => {
-            return (_menu.id === req.params.menuId);
-        });
-        if (index > -1)
-            next();
-        else {
-            res.status(400).send({
-                status: 'warn',
-                msg: 'Menú NO encontrado'
-            });
-        }
     }
 }
