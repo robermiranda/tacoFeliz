@@ -25,43 +25,50 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
     catch (err) {
-        console.error('ERROR al obtener todos los usuarios', err);
+        console.error('ERROR al obtener la lista de menú', err);
         res.status(500).send({
             status: 'error',
-            msg: 'ERROR al obtener lista de modificadores'
+            msg: 'ERROR al obtener lista de menú'
         });
     }
 })
-.get('/detalle', function (req: Request, res: Response) {
-    // caso de uso (usuario final): ver menú
-    // para este caso hay que proporcionar el nombre del menu para obtener el detalle
-    // el detalle solo de ese menu.
-    const menuResponse = menu.map((_menu: any) => {
-        const categoriaDesc = categoria[_menu.categoria];
-        
-        const modificadoresDesc = _menu.modificadores.map((modificadorId: string) => {
-            return modificadores.find((modificador: any) => modificador.id === modificadorId);
+.get('/:nombre', async function (req: Request, res: Response) {
+    // usuarios: admin y final
+    // caso de uso: ver menú cuyo nombre es ':nombre'
+    
+    try {
+        const menu = await prisma.menu.findUnique({
+            where: {
+                nombre: req.params.nombre
+            }
         });
 
-        return {
-            ..._menu,
-            categoria: categoriaDesc,
-            modificadores: modificadoresDesc
+        if (menu) {
+            res.send({
+                status: 'ok',
+                data: menu
+            });
         }
-
-    });
-
-    res.send({
-        status: 'ok',
-        data: menuResponse
-    });
+        else {
+            res.send({
+                status: 'warm',
+                msg: `Sin resultados para el menu: ${req.params.nombre}`
+            });
+        }
+    }
+    catch (err) {
+        console.error('ERROR al obtener el menú', err);
+        res.status(500).send({
+            status: 'error',
+            msg: 'ERROR al obtener el menú'
+        });
+    }
 })
 .post('/', validaMenu, async function (req: Request, res: Response) {
     // usuario: Admin
     // caso de uso: dar de alta un modificador
 
     const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
-
 
     const datos: any = {
         nombre,
@@ -95,20 +102,40 @@ export default router.get('/', async function (req: Request, res: Response) {
 
 
 })
-.patch('/', validaMenuParaEditar, function (req: Request, res: Response) {
-    // caso de uso (usuario admin): editar un menú
-    const {menuId, categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
+.patch('/', validaMenuParaEditar, async function (req: Request, res: Response) {
+    // usuario admin
+    // caso de uso: editar un menú
 
-    // se procede a enviar a la db los datos para editar el menú
-    // se da a la db la responsabilidad de verificar que existe menú para id = menuId
+    const {nombre, categoria, notas, precio, disponibilidad, imagen} = req.body;
+    const menu: any = {}
 
-    res.send({
-        status: 'ok',
-        msg: 'modificador agregado',
-        data: {
-            menuId, categoria, nombre, notas, precio, disponibilidad, modificadores, imagen
-        }
-    });
+    if (disponibilidad) menu.disponibilidad = getBooleanVal(disponibilidad);
+    if (precio) menu.precio = Number.parseFloat(precio);
+    if (categoria) menu.categoria = categoria;
+    if (notas) menu.notas = notas;
+    if (imagen) menu.imagen = imagen;
+
+    try {
+        await prisma.menu.update({
+            where: {
+                nombre: nombre
+            },
+            data: menu
+        });
+
+        res.send({
+            status: 'ok',
+            msg: 'menú actualizado'
+        });
+    }
+    catch (err) {
+        const msg = `ERROR al actualizar menú ${nombre}`;
+        console.error(msg, err);
+        res.status(500).send({
+            status: 'error',
+            msg
+        });
+    }
 })
 .delete('/:nombre', validaNombre, async function (req: Request, res: Response) {
     // usuario admin
@@ -291,13 +318,36 @@ function validaNombre (req: Request, res: Response, next: NextFunction) {
     }
 }
 
+function validaNombreCategoria (categoria: string) {
+    const index = CATEGORIAS.findIndex(cat => {
+        return (cat.toUpperCase() === categoria.toUpperCase());
+    });
+
+    return (index > -1);
+}
+
+function validaPrecio (_precio: string) {
+    const precio = Number.parseFloat(_precio);
+    return ( ! Number.isNaN(precio) && precio >= PRECIO_MIN);
+}
+
+function validaModificadores (modificadores: string[]) {
+    return (Array.isArray(modificadores) && modificadores.length > 0);
+}
+
+const validaNotas =(notas: string) => (notas.length <= NOTAS_LONG_MAX);
+
+function validaDisponibilidad (disponibilidad: string) {
+    return (disponibilidad.toUpperCase() === 'TRUE' ||
+        disponibilidad.toUpperCase() === 'FALSE');
+}
+
 function validaMenu (req: Request, res: Response, next: NextFunction) {
     const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
     const _precio = Number.parseFloat(precio);
 
     const aux = CATEGORIAS.findIndex(categoria => categoria === categoria.toUpperCase());
 
-    console.log('CATEGORIA INDEX', aux, aux > -1, categoria.toUpperCase(), CATEGORIAS[0]);
     if (nombre && nombre.length <= NOMBRE_LONG_MAX &&
         CATEGORIAS.findIndex(cat => cat.toUpperCase() === categoria.toUpperCase()) > -1 &&
         ! Number.isNaN(_precio) && _precio >= PRECIO_MIN &&
@@ -321,33 +371,16 @@ function validaMenu (req: Request, res: Response, next: NextFunction) {
     }
 }
 
-
-function validaModificadorParaEditar (req: Request, res: Response, next: NextFunction) {
-    const {nombre, precio, disponibilidad} = req.body;
-    const _precio = Number.parseFloat(precio);
-
-    if (nombre && (disponibilidad ||
-        ( ! Number.isNaN(_precio) && _precio >= 0))) {
-    
-        next();
-    }
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: `Datos obligatorios: nombre y (precio >= 0 o disponibilidad)`
-        });
-    }
-}
-
 function validaMenuParaEditar (req: Request, res: Response, next: NextFunction) {
-    const {menuId, categoria, nombre, notas, precio, disponibilidad, modificadores} = req.body;
-    const _precio = Number.parseFloat(precio);
 
-    if ((categoria || disponibilidad || nombre || _precio || notas || modificadores) && 
-        menuId &&
-        ( ! precio || (! Number.isNaN(_precio) && _precio >= PRECIO_MIN)) &&
-        ( ! notas || notas.length <= NOTAS_LONG_MAX) &&
-        ( ! modificadores || (Array.isArray(modificadores) && modificadores.length > 0))) {
+    const {nombre, categoria, notas, precio, disponibilidad, modificadores} = req.body;
+
+    if (nombre &&
+        ( ! disponibilidad || validaDisponibilidad(disponibilidad)) &&
+        ( ! categoria || validaNombreCategoria(categoria)) &&
+        ( ! notas || validaNotas(notas)) &&
+        ( ! precio || validaPrecio(precio)) &&
+        ( ! modificadores || validaModificadores(modificadores))) {
 
         next();
     }
@@ -360,6 +393,23 @@ function validaMenuParaEditar (req: Request, res: Response, next: NextFunction) 
             disponibilidad,
             lista de modificadores validos,
             categoria`
+        });
+    }
+}
+
+function validaModificadorParaEditar (req: Request, res: Response, next: NextFunction) {
+    const {nombre, precio, disponibilidad} = req.body;
+    const _precio = Number.parseFloat(precio);
+
+    if (nombre && (disponibilidad ||
+        ( ! Number.isNaN(_precio) && _precio >= PRECIO_MIN))) {
+    
+        next();
+    }
+    else {
+        res.status(400).send({
+            status: 'warn',
+            msg: `Datos obligatorios: nombre y (precio >= 0 o disponibilidad)`
         });
     }
 }
