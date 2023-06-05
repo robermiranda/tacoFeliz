@@ -79,7 +79,7 @@ El detalle para desplegar localmente la aplicación esta en la variable de ambie
 
 `DATABASE_URL=mongodb+srv://<user>:<password>.qgye5kk.mongodb.net/taco-feliz`
 
-El valor de esta variable es la cadena de conexión a la base de datos *taco-feliz* en mongodb atlas y hay que agregar los valores propios: *<user>*  y *<password>*.
+El valor de esta variable es la cadena de conexión a la base de datos *taco-feliz* en mongodb atlas y hay que agregar los valores propios: *user*  y *password*.
 
 También es necesario contar con registro en *mongodb atlas* para poder crear ahí la base de datos. Sin embargo puede probar la aplicación desplegada en *render.com*: *https://taco-feliz.onrender.com*
 
