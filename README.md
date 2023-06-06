@@ -38,10 +38,7 @@ De la especificación se obtienen las siguientes *entidades*:
 
 Las cuales se relacionan como se aprecia en el siguiente diagrama de clases
 
-![Diagrama de clases](https://drive.google.com/file/d/1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN/view)
-
-<img src="https://drive.google.com/file/d/1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN/view" alt="Diagrama de clases" title="Diagrama de clases">
-
+![Diagrama de clases](https://drive.google.com/file/d/1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN/view?usp=sharing)
 
 El diseño de datos que se propone es una *arquitectura estrella* en donde tenemos una clase central: *Orden* y las demás clases se relacionan solo con esta clase. Esta es una arquitectura muy sencilla y facil de modelar ya que no se tienen varios niveles de dependencia.
 
