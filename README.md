@@ -16,7 +16,7 @@ La *url* de la aplicación es: *https://taco-feliz.onrender.com* y desde el nave
 
 ### ARQUITECTURA
 
-En los *requerimientos obligatorios* de este proyecto se pide desarrollar un *backend* hacinedo uso del motor de ejecución *Node js* y alguno de sus framewords. Para cumplir con el requirimiento se han usado las siguientes tecnologías:
+En los *requerimientos obligatorios* de este proyecto se pide desarrollar un *backend* hacinedo uso del motor de ejecución *Node js* y alguno de sus framewords. Para cumplir con el requerimiento se han usado las siguientes tecnologías:
 
 - **Node js** como motor de ejecución.
 - **Express js** para la construcción del API REST.
@@ -40,15 +40,15 @@ Las cuales se relacionan como se aprecia en el siguiente diagrama de clases
 
 ![Diagrama de clases](https://drive.google.com/uc?export=view&id=1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN)
 
-El diseño de datos que se propone es una *arquitectura estrella* en donde tenemos una clase central: *Orden* y las demás clases se relacionan solo con esta clase. Esta es una arquitectura muy sencilla y facil de modelar ya que no se tienen varios niveles de dependencia.
+El diseño de datos que se propone es una *arquitectura estrella* en donde tenemos una clase central: *Orden* y las demás clases se relacionan solo con esta clase. Esta es una arquitectura muy sencilla y fácil de modelar ya que no se tienen varios niveles de dependencia.
 
-Hay que aclarar que la clase *Costo* es una clase que por si sola no tiene sentido; y por lo mismo no tiene un identificador *id*. Esta clase puede ser una clase interna a la clase *Orden* o bien puede representarsee como un valor compuesto (un objeto javascript) de la propiedad *costo* en la clase *Orden*.
+Hay que aclarar que la clase *Costo* es una clase que por si sola no tiene sentido; y por lo mismo no tiene un identificador *id*. Esta clase puede ser una clase interna a la clase *Orden* o bien puede representarse como un valor compuesto (un objeto javascript) de la propiedad *costo* en la clase *Orden*.
 
 Varios atributos de las clases tienen valores de *enum*; por ejemplo la propiedad *categoria* de la clase *Menu* es un *enum* y sus valores son: *entrada*, *plato fuerte*, *postre* y  *bebida*. Así tenemos las siguientes *enums*:
 
 - usuario.tipo: USUARIO_FINAL | SUPER_ADMIN
 - usuario.estatus: ACTIVO | BLOQUEADO
-- orden.estatus: CREADA | PREPARANDO | CANCELAD | ENTREGADA
+- orden.estatus: CREADA | PREPARANDO | CANCELADO | ENTREGADA
 - orden.metodoPago: CONTRA_ENTREGA | TARJEGA_CREDITO
 - menu.categoria: ENTRADA | PLATO_FUERTE | POSTRE | BEBIDA
 
