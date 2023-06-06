@@ -28,6 +28,39 @@ Con estas tecnologías se ha desarrollado un *API REST* con una arquitectura de 
 
 **CLIENTE**  ----->  **SERVIDOR**  ----->  **BASE DE DATOS**
 
+De la especificación se obtienen las siguientes *entidades*:
+
+- Orden. Representa la orden de compra de un menú
+- Menú. Son los platillos que ofrece el restaurante taco feliz
+- Modificadores. Son ingredientes extra del menú y estos son opcionales
+- Usuario. Representa un cliente del restaurante, alguien que va a comprar un menú
+- Costo. La suma total de los precios de los menús y modificadores adquiridos por el cliente
+
+Las cuales se relacionan como se aprecia en el siguiente diagrama de clases
+
+![Diagrama de clases](https://drive.google.com/file/d/1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN/view)
+
+<img src="https://drive.google.com/file/d/1rfFGLrfm1WWVYHCiKltlN93VT1sMw-AN/view" alt="Diagrama de clases" title="Diagrama de clases">
+
+
+El diseño de datos que se propone es una *arquitectura estrella* en donde tenemos una clase central: *Orden* y las demás clases se relacionan solo con esta clase. Esta es una arquitectura muy sencilla y facil de modelar ya que no se tienen varios niveles de dependencia.
+
+Hay que aclarar que la clase *Costo* es una clase que por si sola no tiene sentido; y por lo mismo no tiene un identificador *id*. Entonces la clase *Costo* bien puede ser una clase interna a la clase Orden o bien puede representarsee como un valor compuesto (un objeto javascript) de la propiedad *costo* de la clase *Orden*.
+
+Varios atributos de las clases tienen valores de *enum*; por ejemplo la propiedad *categoria* de la clase *Menu* su *enum* *entrada*, *plato fuerte*, *postre* y  *bebida*. Así tenemos las siguientes *enums*:
+
+- usuario.tipo: USUARIO_FINAL | SUPER_ADMIN
+- usuario.estatus: ACTIVO | BLOQUEADO
+- orden.estatus: CREADA | PREPARANDO | CANCELAD | ENTREGADA
+- orden.metodoPago: CONTRA_ENTREGA | TARJEGA_CREDITO
+- menu.categoria: ENTRADA | PLATO_FUERTE | POSTRE | BEBIDA
+
+Respecto de las propiedades de *estatus* estos pueden cambiar con el tiempo; así por ejemplo el *estatus* para una entidad de la clase *Usuario* inicia con un valor: *ACTIVO* pero puede pasar a *BLOQUEADO*.
+
+Analizando el *estatus* de la clase *Orden* resulta ser más interesante, pues una orden inicia en el estado *CREADA* y puede pasar a los estados *PREPARANDO* o *CANCELADA* que es un estado final; del estado *PREPARANDO* puede pasar a los estados finales *CANCELADA* o *ENTREGADA*.
+
+![Maquina de Estados de una Orden](https://drive.google.com/file/d/1B-T-NVhLUrt2L_-62hCBA48RPGfGGm9Z/view)
+
 ### EJEMPLOS
 
 Para realizar operaciones *CRUD* en los recursos *menu* y *modificadores* se pueden seguir los siguientes ejemplos utilizando *curl*.
