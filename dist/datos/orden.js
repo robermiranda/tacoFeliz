@@ -1,4 +1,5 @@
 "use strict";
+//import { ordenBasicaT } from "../routes/orden"
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ordenes = void 0;
 exports.ordenes = [

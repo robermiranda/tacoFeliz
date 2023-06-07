@@ -13,33 +13,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const client_1 = require("@prisma/client");
-const TIPO_USUARIO = {
-    final: 'FINAL',
-    admin: 'SUPER_ADMIN'
-};
-const ESTATUS = {
-    activo: 'ACTIVO',
-    bloquedao: 'BLOQUEADO'
-};
-const prisma = new client_1.PrismaClient();
+const Usuario_1 = require("../models/Usuario");
+const util_1 = require("../util");
 const router = express_1.default.Router();
 exports.default = router.get('/', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        // usuario admin
+        // obtiene la lista de usuarios
         try {
-            const usuarios = yield prisma.usuarios.findMany();
-            res.send({
-                status: 'ok',
-                msg: `usuarios obtenidos: ${usuarios.length}`,
-                data: usuarios
-            });
+            const usuarios = yield Usuario_1.Usuario.find({});
+            res.send((0, util_1.stdRes)('ok', `usuarios obtenidos: ${usuarios.length}`, usuarios));
         }
         catch (err) {
-            console.error('ERROR al obtener todos los usuarios', err);
-            res.status(500).send({
-                status: 'error',
-                msg: 'ERROR al obtener los usuarios'
-            });
+            res.status(500).send((0, util_1.stdRes)('error', 'ERROR al obtener los usuarios'));
         }
     });
 })
@@ -48,61 +34,42 @@ exports.default = router.get('/', function (req, res) {
         // usuario final
         // caso de uso: Registro en aplicación
         const usuario = {
-            email: req.body.email,
-            tipo: TIPO_USUARIO.final,
-            estatus: ESTATUS.activo,
-            password: req.body.password,
             nombre: req.body.nombre,
+            email: req.body.email,
+            password: req.body.password,
         };
         if (req.body.apPaterno)
             usuario.apPaterno = req.body.apPaterno;
         if (req.body.apMaterno)
             usuario.apMaterno = req.body.apMaterno;
         try {
-            yield prisma.usuarios.create({
-                data: usuario
-            });
-            res.send({
-                status: 'ok'
-            });
+            const _usuario = yield Usuario_1.Usuario.create(usuario);
+            res.send((0, util_1.stdRes)('ok', `usuario creado con id: ${_usuario._id}`));
         }
         catch (err) {
             console.error('ERROR al insertar usuario', usuario.email, err);
-            res.status(500).send({
-                status: 'error',
-                msg: 'usuario NO registrado'
-            });
+            res.status(500).send((0, util_1.stdRes)('error', 'usuario NO registrado'));
         }
     });
 })
-    .patch('/', function (req, res) {
+    .patch('/estatus/', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        // caso de uso (usuario admin): bloquear usuario
-        // se procede a llamar al endpoint de la base de datos para cancelar al usuario
-        // para lo cual se debe proporcionar dos parametros:
-        // email del usuario a eliminar: emailUsuario
-        // recuerdese que solo el usuario admin puede bloquear usuarios
+        // usuario admin
+        // caso de uso: bloquear usuario
+        // se debe proporcionar el email del usuario a bloquear
         try {
-            const bloqueado = yield prisma.usuarios.update({
-                where: {
-                    email: req.body.emailUsuario
-                },
-                data: {
-                    estatus: ESTATUS.bloquedao
-                }
-            });
-            res.send({
-                status: 'ok',
-                msg: 'usuario bloqueado'
-            });
+            const response = yield Usuario_1.Usuario.updateOne({ email: req.body.emailUsuario }, { estatus: Usuario_1.ESTATUS_USUARIO.bloqueado });
+            let stdres;
+            if (response.modifiedCount === 1)
+                stdres = (0, util_1.stdRes)('ok', 'usuario bloqueado');
+            else
+                stdres = (0, util_1.stdRes)('warn', 'usuario NO bloqueado');
+            res.send(stdres);
         }
         catch (err) {
             const msg = `ERROR al bloquear usuario ${req.body.emailUsuario}`;
             console.error(msg, err);
-            res.status(500).send({
-                status: 'error',
-                msg
-            });
+            res.status(500).send((0, util_1.stdRes)('error', msg));
         }
     });
 });

@@ -3,12 +3,15 @@ CURL REQUEST
 
 // Casos de uso para el usuario final ************************************
 
-// CASO DE USO: VER MENÚ
+// VER MENÚ
 curl localhost:3000/menu/"enchiladas suizas"
 
 
-// caso de uso: registro en aplicación
+// REGISTRO EN APLICACIÓN
 curl -X POST localhost:3000/usuario -H 'Content-Type: application/json' -d '{"nombre": "Berenice", "apPaterno": "Bravo", "email": "berenice@gmail.com", "password": "abc123"}'
+curl -X POST localhost:3000/usuario \
+-H 'Content-Type: application/json' \
+-d '{"nombre": "Hugo", "apPaterno": "Hernandez", "email": "abelardo@gmail.com", "password": "abc123"}'
 
 
 // Inicio de sesion
@@ -25,8 +28,11 @@ curl -X POST localhost:3000/orden -H 'Content-Type: application/json' -d '{"meto
 
 // Casos de uso para el usuario admin ************************************
 
-// Bloquear usuario
-curl -X PATCH localhost:3000/usuario -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"emailUsuario": "samuel@gmail.com"}'
+// BlOQUEAR USUARIO
+curl -X PATCH localhost:3000/usuario/estatus \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-d '{"emailUsuario": "samuel@gmail.com"}'
 
 
 // ver modificadores
