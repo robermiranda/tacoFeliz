@@ -2,6 +2,7 @@ import express, { Application, NextFunction, Request, Response } from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
 //import rutaMenu from './routes/menu';
+import rutaModificador from './routes/modificador'
 import rutaOrden from './routes/orden';
 import rutaUsuario from './routes/usuario';
 import rutaSesion from './routes/sesion';
@@ -15,6 +16,7 @@ app.use(bodyParser.json());
 app.use(logger('dev'));
 
 //app.use('/menu', rutaMenu);
+app.use('/modificador', rutaModificador);
 app.use('/orden', rutaOrden);
 app.use('/usuario', rutaUsuario);
 app.use('/sesion', rutaSesion);

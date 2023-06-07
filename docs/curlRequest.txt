@@ -35,22 +35,25 @@ curl -X PATCH localhost:3000/usuario/estatus \
 -d '{"emailUsuario": "samuel@gmail.com"}'
 
 
-// ver modificadores
-curl localhost:3000/menu/modificadores
+// OBTENER LISTA DE MODIFICADORES
+curl localhost:3000/modificador
 
 
-// Agregar un modificador
-curl -X POST localhost:3000/menu/modificadores -H 'Content-Type: application/json' -d '{"nombre": "condimento extra", "disponibilidad": "true", "precio": 5.00}'
-curl -X POST localhost:3000/menu/modificadores -H 'Content-Type: application/json' -d '{"nombre": "123456789_123456789_123456789_123456789_", "disponibilidad": "true", "precio": 5.00}'
+// AGRAGAR UN MODIFICADOR
+curl -X POST localhost:3000/modificador -H 'Content-Type: application/json' -d '{"nombre": "limones partidos", "precio": 0.00}'
+curl -X POST localhost:3000/modificador -H 'Content-Type: application/json' -d '{"nombre": "123456789_123456789_123456789_123456789_", "disponibilidad": "true", "precio": 5.00}'
 
 
 // ELIMINAR UN MODIFICADOR
-curl -X DELETE localhost:3000/menu/modificadores/mod-m5-2
+curl -X DELETE localhost:3000/modificador/limones%20partidos
 
 
 // EDITAR UN MODIFICADOR
 curl -X PATCH localhost:3000/menu/modificadores -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"nombre": "condimento extra", "disponibilidad": "true", "precio": 5.00, "modificadorId": "7"}'
-curl -X PATCH localhost:3000/menu/modificadores -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"nombre": "condimento extra", "disponibilidad": "truñe"}'
+curl -X PATCH localhost:3000/menu/modificadores \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-d '{"nombre": "condimento extra", "disponibilidad": "truñe"}'
 
 // ver menú
 curl localhost:3000/menu/detalle

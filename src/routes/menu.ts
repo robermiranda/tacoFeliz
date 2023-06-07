@@ -1,9 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
-//import { PrismaClient } from '@prisma/client';
-
+import { Modificador } from '../models/Modificador';
+import { stdRes } from '../util';
 
 const router = express.Router();
-//const prisma = new PrismaClient();
 
 const NOTAS_LONG_MAX: number = 80;
 const NOMBRE_LONG_MAX: number = 40;
@@ -16,7 +15,7 @@ export default router.get('/', async function (req: Request, res: Response) {
     // Obtiene la lista de menu
 
     try {
-        /*const menu = await prisma.menu.findMany();
+        const menu = await prisma.menu.findMany();
         res.send({
             status: 'ok',
             msg: `menus obtenidos: ${menu.length}`,
@@ -155,9 +154,18 @@ export default router.get('/', async function (req: Request, res: Response) {
         });
     }
 })
-.get('/modificadores', async function (req: Request, res: Response) {
+
+export default router.get('/modificadores', async function (req: Request, res: Response) {
     // usuario Admin
-    // devuleve la lista de modificadores
+    // devuleve lista de modificadores
+
+    try {
+        const usuarios = await Modificador.find({});
+        res.send(stdRes('ok', `usuarios obtenidos: ${usuarios.length}`, usuarios));
+    }
+    catch (err) {
+        res.status(500).send(stdRes('error','ERROR al obtener los usuarios'));
+    }
 
     try {
         const modificadores = await prisma.modificadores.findMany();
@@ -263,7 +271,6 @@ export default router.get('/', async function (req: Request, res: Response) {
 // Declaración de tipos  ******************************************************
 
 type modificadorT = {
-    id?: string,
     nombre: string,
     precio: number,
     disponibilidad: boolean
