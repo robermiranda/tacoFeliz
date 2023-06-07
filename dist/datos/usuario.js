@@ -11,7 +11,6 @@ exports.estatusUsuario = new Map([
 ]);
 exports.usuarios = [
     {
-        id: 'usu-1',
         tipo: '1',
         estatus: '1',
         nombre: 'Federico',
@@ -21,7 +20,6 @@ exports.usuarios = [
         password: '567',
     },
     {
-        id: 'usu-2',
         tipo: '2',
         estatus: '1',
         nombre: 'Juan',
@@ -31,7 +29,6 @@ exports.usuarios = [
         password: '123'
     },
     {
-        id: 'usu-3',
         tipo: '2',
         estatus: '2',
         nombre: 'Armando',

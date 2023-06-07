@@ -48,5 +48,5 @@ const usuarioSchema = new mongoose_1.Schema({
         default: exports.TIPO_USUARIO.final,
         maxLength: 20
     }
-});
+}, { versionKey: false });
 exports.Usuario = (0, mongoose_1.model)("Usuario", usuarioSchema);
