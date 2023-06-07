@@ -72,7 +72,7 @@ curl -X POST localhost:3000/usuario -H 'Content-Type: application/json' \
 
 Agregar un modificador:
 ```
-curl -X POST localhost:3000/menu/modificadores -H 'Content-Type: application/json' \
+curl -X POST localhost:3000/modificador -H 'Content-Type: application/json' \
 -d '{"nombre": "condimento extra", "disponibilidad": "true", "precio": 5.00}'
 ```
 
