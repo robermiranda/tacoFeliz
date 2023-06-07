@@ -11,7 +11,8 @@ Este es un repositorio público que corresponde a una prueba técnica cuyo statu
 
 La *url* de la aplicación es: *https://taco-feliz.onrender.com* y desde el navegador puede consultar los siguientes recursos:
 
-- [Lista de menú](https://taco-feliz.onrender.com/usuario)
+- [Lista de usuarios](https://taco-feliz.onrender.com/usuario)
+- [Lista de modificadores](https://taco-feliz.onrender.com/modificador)
 
 ### ARQUITECTURA
 
