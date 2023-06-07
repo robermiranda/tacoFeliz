@@ -33,7 +33,9 @@ app.use(function (err: Error, req: Request, res: Response, next: NextFunction) {
 const start = async () => {
     try {
         if (process.env.DATABASE_URL) {
+            console.log('Conectando con base de datos . . . . .');
             await connect(process.env.DATABASE_URL);
+            console.log('base de datos conectada');
         
             app.listen(PORT, (): void => {
                 console.log('SERVER IS UP ON PORT:', PORT);
