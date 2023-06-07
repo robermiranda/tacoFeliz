@@ -11,8 +11,7 @@ Este es un repositorio público que corresponde a una prueba técnica cuyo statu
 
 La *url* de la aplicación es: *https://taco-feliz.onrender.com* y desde el navegador puede consultar los siguientes recursos:
 
-- [Lista de menú](https://taco-feliz.onrender.com/menu)
-- [Lista de modificadores](https://taco-feliz.onrender.com/menu/modificadores)
+- [Lista de menú](https://taco-feliz.onrender.com/usuario)
 
 ### ARQUITECTURA
 
@@ -21,12 +20,12 @@ En los *requerimientos obligatorios* de este proyecto se pide desarrollar un *ba
 - **Node js** como motor de ejecución.
 - **Express js** para la construcción del API REST.
 - **Typescript** para escribir código con menor incidencia de bugs.
-- **Prisma** *orm/odm* para conectarse con la base de datos y simplificar las operaciones *CRUD*.
+- **Mongoose** *odm* para conectarse con la base de datos y simplificar las operaciones *CRUD*.
 - **Mongodb Atlas** base de datos *NoSQL* en la nube basada en *javascript*.
 
 Con estas tecnologías se ha desarrollado un *API REST* con una arquitectura de 3 capas:
 
-**CLIENTE**  ----->  **SERVIDOR**  ----->  **BASE DE DATOS**
+**CLIENTE**  ------->  **SERVIDOR**  ------->  **BASE DE DATOS**
 
 De la especificación de la prueba técnica se obtienen las siguientes *entidades*:
 
@@ -58,6 +57,7 @@ Analizando el *estatus* de la clase *Orden* resulta ser más interesante, pues u
 
 ![Maquina de Estados de una Orden](https://drive.google.com/uc?export=view&id=1B-T-NVhLUrt2L_-62hCBA48RPGfGGm9Z)
 
+
 ### EJEMPLOS
 
 Para realizar operaciones *CRUD* en los recursos *menu* y *modificadores* se pueden seguir los siguientes ejemplos utilizando *curl*.
@@ -79,7 +79,7 @@ Más ejemplos los puede encontrar en el archivo *docs/curlRequest.txt* del repos
 
 ### PERSISTENCIA DE DATOS
 
-Se ha utilizado *prisma orm* como mecanismo de persistencia en *mongodb*. La creación de colecciones se hace directamente en *mongosh* con el comando: 
+Se ha utilizado *Mongoose odm* como mecanismo de persistencia en *mongodb*. La creación de colecciones se hace directamente en *mongosh* con el comando: 
 
 `db.createCollection(<name collection>, <options>)`
 
@@ -120,6 +120,7 @@ Se pueden seguir los ejemplos mencionados en el archivo *docs/curlRequest.txt* p
 
 El status del proyecto es: *en desarrollo* y aún falta por implementar muchas características:
 
+- Terminar los casos de uso
 - pruebas unitarias (con *jest*)
 - envio de emails al registrarse un usuario
 - manejo de sesiones (con *jwt*)
