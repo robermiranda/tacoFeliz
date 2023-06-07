@@ -48,6 +48,6 @@ const usuarioSchema = new Schema({
         default: TIPO_USUARIO.final,
         maxLength: 20
     }
-});
+}, {versionKey: false});
 
 export const Usuario = model ("Usuario", usuarioSchema);
