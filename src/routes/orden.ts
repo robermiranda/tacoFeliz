@@ -1,8 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+//import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 
 const { ordenes } = require('../datos/orden');
 const { menu, modificadores, categoria } = require('../datos/menu');

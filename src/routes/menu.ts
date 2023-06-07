@@ -1,22 +1,22 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+//import { PrismaClient } from '@prisma/client';
 
 
 const router = express.Router();
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 
 const NOTAS_LONG_MAX: number = 80;
 const NOMBRE_LONG_MAX: number = 40;
 const PRECIO_MIN: number = 0;
 const CATEGORIAS: string[] = ["ENTRADA", "PLATO FUERTE", "BEBIDA", "POSTRE"];
 
-
+/*
 export default router.get('/', async function (req: Request, res: Response) {
     // usuario Adimin
     // Obtiene la lista de menu
 
     try {
-        const menu = await prisma.menu.findMany();
+        /*const menu = await prisma.menu.findMany();
         res.send({
             status: 'ok',
             msg: `menus obtenidos: ${menu.length}`,
@@ -399,3 +399,4 @@ function validaModificadorNombre (req: Request, res: Response, next: NextFunctio
         });
     } 
 }
+*/

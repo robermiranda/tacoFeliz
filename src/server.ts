@@ -1,7 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
-import rutaMenu from './routes/menu';
+//import rutaMenu from './routes/menu';
 import rutaOrden from './routes/orden';
 import rutaUsuario from './routes/usuario';
 import rutaSesion from './routes/sesion';
@@ -14,7 +14,7 @@ const PORT: number = 3000;
 app.use(bodyParser.json());
 app.use(logger('dev'));
 
-app.use('/menu', rutaMenu);
+//app.use('/menu', rutaMenu);
 app.use('/orden', rutaOrden);
 app.use('/usuario', rutaUsuario);
 app.use('/sesion', rutaSesion);
