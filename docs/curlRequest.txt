@@ -63,14 +63,18 @@ curl localhost:3000/menu/detalle
 curl -X POST localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "enchiladas suizas", "disponibilidad": "true", "precio": 155.00, "categoria": "plato fuerte", "notas": "Orden de tres enchiladas", "modificadores": ["m1", "m2"]}'
 curl -X POST localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "pescado", "disponibilidad": "true", "precio": 155.00, "categoria": "plato fuerte", "notas": "Orden de tres enchiladas", "modificadores": ["m1", "m2"]}'
 curl -X POST localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "enchiladas", "disponibilidad": "true", "precio": 155.00, "categoria": "plato fuerte", "notas": "Orden de tres enchiladas"}'
-curl -X POST localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "sopa azteca", "disponibilidad": "true", "precio": 80.00, "categoria": "entrada", "notas": "sopa de tortilla con chile huajillo"}'
+curl -X POST localhost:3000/menu \
+-H 'Content-Type: application/json' \
+-d '{"nombre": "tacos dorados", "disponibilidad": "false", "precio": 60.00, "categoria": "plato fuerte", "notas": "orden de tres tacos dorados de pollo"}'
 
 
-// Editar un menú
+// EDITAR UN MENÚ
 // categoria, nombre, notas, precio, disponibilidad, modificadores
 curl -X PATCH localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "enchiladas", "disponibilidad": "true", "precio": 155.00, "categoria": "plato fuerte", "notas": "Orden de tres enchiladas", "modificadores": ["mod-1", "mod-2"], "imagen": "x.png", "menuId": "5"}'
-curl -X PATCH localhost:3000/menu -H 'Content-Type: application/json' -d '{"nombre": "pescado", "disponibilidad": false, "precio": 155.00, "categoria": "plato fuerte", "notas": "Orden de tres enchiladas", "modificadores": ["mod-1", "mod-2"], "imagen": "x.png", "menuId": "5"}'
+curl -X PATCH localhost:3000/menu \
+-H 'Content-Type: application/json' \
+-d '{"nombre": "pescado a la  plancha", "notas": "pecado asado a la planca con ajo y cebolla"}'
 
 
 // ELIMINAR UN MENU
-curl -X DELETE localhost:3000/menu
+curl -X DELETE localhost:3000/menu/pescado%20a%20la%20planca

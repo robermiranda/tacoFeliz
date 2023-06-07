@@ -1,33 +1,20 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { Modificador } from '../models/Modificador';
+import { Menu } from '../models/Menu';
 import { stdRes } from '../util';
 
 const router = express.Router();
 
-const NOTAS_LONG_MAX: number = 80;
-const NOMBRE_LONG_MAX: number = 40;
-const PRECIO_MIN: number = 0;
-const CATEGORIAS: string[] = ["ENTRADA", "PLATO FUERTE", "BEBIDA", "POSTRE"];
-
-/*
 export default router.get('/', async function (req: Request, res: Response) {
     // usuario Adimin
     // Obtiene la lista de menu
 
     try {
-        const menu = await prisma.menu.findMany();
-        res.send({
-            status: 'ok',
-            msg: `menus obtenidos: ${menu.length}`,
-            data: menu
-        });
+        const menu = await Menu.find({});
+        res.send(stdRes('ok', `menus obtenidos: ${menu.length}`, menu));
     }
-    catch (err) {
-        // console.error('ERROR al obtener la lista de menú', err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'ERROR al obtener lista de menú'
-        });
+    catch (err: any) {
+        res.status(500).send(stdRes('error', err.meta.cause));
+        throw err;
     }
 })
 .get('/:nombre', async function (req: Request, res: Response) {
@@ -35,31 +22,14 @@ export default router.get('/', async function (req: Request, res: Response) {
     // caso de uso: ver menú cuyo nombre es ':nombre'
     
     try {
-        const menu = await prisma.menu.findUnique({
-            where: {
-                nombre: req.params.nombre
-            }
-        });
+        const menu = await Menu.findOne({nombre: req.params.nombre}).exec();
 
-        if (menu) {
-            res.send({
-                status: 'ok',
-                data: menu
-            });
-        }
-        else {
-            res.send({
-                status: 'warm',
-                msg: `Sin resultados para el menu: ${req.params.nombre}`
-            });
-        }
+        if (menu) res.send(stdRes('ok', undefined, menu));
+        else res.send(stdRes('warn', 'Sin resultados'));
     }
-    catch (err) {
-        // console.error('ERROR al obtener el menú', err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'ERROR al obtener el menú'
-        });
+    catch (err: any) {
+        res.status(500).send(stdRes('error', err.meta.cause));
+        throw err;
     }
 })
 .post('/', validaMenu, async function (req: Request, res: Response) {
@@ -82,27 +52,23 @@ export default router.get('/', async function (req: Request, res: Response) {
     const menu: menuT = datos;
 
     try {
-        await prisma.menu.create({
-            data: menu
-        });
-
-        res.send({
-            status: 'ok'
-        });
+        const response = await Menu.create(menu);
+        console.log('INSERT DOCUMENT MENU ERSPONSE', response);
+        res.send(stdRes('ok', undefined, {id: response._id}));
     }
-    catch (err) {
-        // console.error('ERROR al insertar modificador', menu.nombre, err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'modificador NO registrado'
-        });
+    catch (err: any) {
+        res.status(500).send(stdRes('error', err.meta.cause));
+        throw err;
     }
-
-
 })
 .patch('/', validaMenuParaEditar, async function (req: Request, res: Response) {
     // usuario admin
     // caso de uso: editar un menú
+
+    // para facilitar un poco la lógica de programación, cada menú puede identificarse
+    // por su nombre así como por su _id.
+    // Para editar un menú hay que especificar el 'nombre' como identificador
+    // por lo que al editar un menú no se puede modificar el nombre.
 
     const {nombre, categoria, notas, precio, disponibilidad, modificadores, imagen} = req.body;
     const menu: any = {}
@@ -115,20 +81,13 @@ export default router.get('/', async function (req: Request, res: Response) {
     if (imagen) menu.imagen = imagen;
 
     try {
-        await prisma.menu.update({
-            where: {
-                nombre: nombre
-            },
-            data: menu
-        });
+        const response = await Menu.updateOne({nombre}, menu);
+        if (response.modifiedCount === 1) res.send(stdRes('ok'));
+        else res.status(400).send(stdRes('warn', 'modificador NO actualizado'));
     }
     catch (err: any) {
-        const msg = `ERROR al actualizar menú ${nombre}. ${err.meta.cause}`;
-        // console.error(msg, err);
-        res.status(500).send({
-            status: 'error',
-            msg
-        });
+        res.status(500).send(stdRes('error', err.meta.cause));
+        throw err;
     }
 })
 .delete('/:nombre', validaNombre, async function (req: Request, res: Response) {
@@ -136,145 +95,17 @@ export default router.get('/', async function (req: Request, res: Response) {
     // caso de uso: Eliminar un menú
 
     try {
-        const eliminado = await prisma.menu.delete({
-            where: {
-                nombre: req.params.nombre
-            }
-        });
-
-        res.send({
-            status: 'ok',
-            msg: `Menu eliminado ${eliminado.nombre}`
-        });
+        const response = await Menu.deleteOne({nombre: req.params.nombre});
+        if (response.deletedCount === 1) res.send(stdRes('ok'));
+        else res.send(stdRes('warn', 'menu NO eliminado'));
     }
     catch (err: any) {
-        res.status(500).send({
-            status: 'error',
-            msg: `ERROR. Menu ${req.params.nombre} NO eliminado. ${err.meta.cause}`
-        });
+        res.status(500).send(stdRes('error', err.meta.cause));
+        throw err;
     }
 })
-
-export default router.get('/modificadores', async function (req: Request, res: Response) {
-    // usuario Admin
-    // devuleve lista de modificadores
-
-    try {
-        const usuarios = await Modificador.find({});
-        res.send(stdRes('ok', `usuarios obtenidos: ${usuarios.length}`, usuarios));
-    }
-    catch (err) {
-        res.status(500).send(stdRes('error','ERROR al obtener los usuarios'));
-    }
-
-    try {
-        const modificadores = await prisma.modificadores.findMany();
-        res.send({
-            status: 'ok',
-            msg: `modificadores obtenidos: ${modificadores.length}`,
-            data: modificadores
-        });
-    }
-    catch (err) {
-        // console.error('ERROR al obtener todos los usuarios', err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'ERROR al obtener lista de modificadores'
-        });
-    }
-})
-.post('/modificadores', async function (req: Request, res: Response) {
-    // usuario admin
-    // caso de uso: dar alta a un modificador
-
-    const { nombre, disponibilidad, precio } = req.body;
-
-    const modificador: modificadorT = {
-        nombre,
-        disponibilidad: getBooleanVal(disponibilidad),
-        precio
-    }
-
-    try {
-        await prisma.modificadores.create({
-            data: modificador
-        });
-
-        res.send({
-            status: 'ok'
-        });
-    }
-    catch (err) {
-        // console.error('ERROR al insertar modificador', modificador.nombre, err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'modificador NO registrado'
-        });
-    }
-})
-.delete('/modificadores/:nombre', validaModificadorNombre, async function (req: Request, res: Response) {
-    // usuario admin
-    // caso de uso: eliminar un modificador
-
-    try {
-        const eliminado = await prisma.modificadores.delete({
-            where: {
-                nombre: req.params.nombre
-            }
-        });
-
-        res.send({
-            status: 'ok',
-            msg: `Modificador eliminado ${eliminado.nombre}`
-        });
-    }
-    catch (err: any) {
-        res.status(500).send({
-            status: 'error',
-            msg: `ERROR. Modificador NO eliminado. ${err.meta.cause}`
-        });
-    }
-})
-.patch('/modificadores', validaModificadorParaEditar, async function (req: Request, res: Response) {
-    // usuario admin
-    // caso de uso: editar un modificador
-
-    const { nombre, disponibilidad, precio } = req.body;
-    const modificador: any = {}
-
-    if (disponibilidad) modificador.disponibilidad = getBooleanVal(disponibilidad);
-    if (precio) modificador.precio = Number.parseFloat(precio);
-
-    try {
-        await prisma.modificadores.update({
-            where: {
-                nombre: nombre
-            },
-            data: modificador
-        });
-
-        res.send({
-            status: 'ok',
-            msg: 'modificador actualizado'
-        });
-    }
-    catch (err) {
-        const msg = `ERROR al actualizar modificador ${nombre}`;
-        // console.error(msg, err);
-        res.status(500).send({
-            status: 'error',
-            msg
-        });
-    }
-});
 
 // Declaración de tipos  ******************************************************
-
-type modificadorT = {
-    nombre: string,
-    precio: number,
-    disponibilidad: boolean
-}
 
 type menuT = {
     id?:            string,
@@ -288,6 +119,11 @@ type menuT = {
 }
 
 // Funciones Auxiliares  ******************************************************
+
+const NOTAS_LONG_MAX: number = 80;
+const NOMBRE_LONG_MAX: number = 40;
+const PRECIO_MIN: number = 0;
+const CATEGORIAS: string[] = ["ENTRADA", "PLATO FUERTE", "BEBIDA", "POSTRE"];
 
 function validaNombreCategoria (categoria: string) {
     const index = CATEGORIAS.findIndex(cat => {
@@ -331,9 +167,9 @@ function validaMenu (req: Request, res: Response, next: NextFunction) {
     const {categoria, nombre, notas, precio, disponibilidad, modificadores, imagen} = req.body;
 
     if (nombre && nombre.length <= NOMBRE_LONG_MAX &&
-        validaNombreCategoria(categoria) &&
-        validaPrecio(precio) &&
-        validaDisponibilidad(disponibilidad) &&
+        categoria && validaNombreCategoria(categoria) &&
+        precio && validaPrecio(precio) &&
+        disponibilidad && validaDisponibilidad(disponibilidad) &&
         ( ! notas || validaNotas(notas)) &&
         ( ! modificadores || validaModificadores(modificadores)) &&
         ( ! imagen || (imagen && imagen.length <= 200))) {
@@ -379,31 +215,3 @@ function validaMenuParaEditar (req: Request, res: Response, next: NextFunction) 
         });
     }
 }
-
-function validaModificadorParaEditar (req: Request, res: Response, next: NextFunction) {
-    const {nombre, precio, disponibilidad} = req.body;
-    const _precio = Number.parseFloat(precio);
-
-    if (nombre && (disponibilidad ||
-        ( ! Number.isNaN(_precio) && _precio >= PRECIO_MIN))) {
-    
-        next();
-    }
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: `Datos obligatorios: nombre y (precio >= 0 o disponibilidad)`
-        });
-    }
-}
-
-function validaModificadorNombre (req: Request, res: Response, next: NextFunction) {
-    if (req.params.nombre) next();
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'Se debe especificar el nombre del modificador'
-        });
-    } 
-}
-*/

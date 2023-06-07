@@ -13,6 +13,7 @@ La *url* de la aplicación es: *https://taco-feliz.onrender.com* y desde el nave
 
 - [Lista de usuarios](https://taco-feliz.onrender.com/usuario)
 - [Lista de modificadores](https://taco-feliz.onrender.com/modificador)
+- [Lista de menus](https://taco-feliz.onrender.com/menu)
 
 ### ARQUITECTURA
 
