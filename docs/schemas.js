@@ -30,7 +30,7 @@ db.createCollection("modificadores", {
 })
 
 
-db.createCollection("menu", {
+db.createCollection("menus", {
 	validator: {
 		$jsonSchema: {	
 			bsonType: "object",
@@ -70,15 +70,15 @@ db.createCollection("menu", {
 })
 
 
-db.createCollection("orden", {
+db.createCollection("ordenes", {
 	validator: {
 		$jsonSchema: {	
 			bsonType: "object",
-			required: ["usuario", "estatus", "menu", "metodoPago", "costo", "direccionEnvio"]
+			required: ["usuario", "estatus", "menu", "metodoPago", "costo", "direccionEnvio"],
 			properties: {
 				usuario: {
 					bsonType: "string",
-					maxLength: 20,
+					maxLength: 24,
 					description: "usuario final que posee esta orden"
 				},
 				estatus: {

@@ -1,32 +1,14 @@
-CURL REQUEST
+ejemplos de peticiones al servidor del taco feliz
 
 
-// Casos de uso para el usuario final ************************************
+// USUARIOS *******************************************************************
 
-// VER MENÚ
-curl localhost:3000/menu/"enchiladas suizas"
-
-
-// REGISTRO EN APLICACIÓN
+// REGISTRO DE USUARIOS
 curl -X POST localhost:3000/usuario -H 'Content-Type: application/json' -d '{"nombre": "Berenice", "apPaterno": "Bravo", "email": "berenice@gmail.com", "password": "abc123"}'
 curl -X POST localhost:3000/usuario \
 -H 'Content-Type: application/json' \
 -d '{"nombre": "Hugo", "apPaterno": "Hernandez", "email": "abelardo@gmail.com", "password": "abc123"}'
 
-
-// Inicio de sesion
-curl -X POST localhost:3000/sesion -H 'Content-Type: application/json' -d '{"email": "fer.fernandez@gmail.com", "password": "567"}'
-
-
-// Cancelar orden de pedido
-curl -X DELETE localhost:3000/orden/ord-2
-
-
-// Envio de orden al restaurante
-curl -X POST localhost:3000/orden -H 'Content-Type: application/json' -d '{"metodoPago": 1, "direccionEnvio": "Siempre viva 123", "menu": ["menu-1", "menu-2"]}'
-
-
-// Casos de uso para el usuario admin ************************************
 
 // BlOQUEAR USUARIO
 curl -X PATCH localhost:3000/usuario/estatus \
@@ -34,6 +16,7 @@ curl -X PATCH localhost:3000/usuario/estatus \
 -H 'Accept: application/json' \
 -d '{"emailUsuario": "samuel@gmail.com"}'
 
+// MODIFICADORES **************************************************************
 
 // OBTENER LISTA DE MODIFICADORES
 curl localhost:3000/modificador
@@ -55,8 +38,11 @@ curl -X PATCH localhost:3000/menu/modificadores \
 -H 'Accept: application/json' \
 -d '{"nombre": "condimento extra", "disponibilidad": "truñe"}'
 
-// ver menú
-curl localhost:3000/menu/detalle
+// MENU ***********************************************************************
+
+// VER MENÚ
+curl localhost:3000/menu/enchiladas%20suizas
+
 
 // AGREGA UN MENU
 // categoria, nombre, notas, precio, disponibilidad, modificadores
@@ -78,3 +64,16 @@ curl -X PATCH localhost:3000/menu \
 
 // ELIMINAR UN MENU
 curl -X DELETE localhost:3000/menu/pescado%20a%20la%20planca
+
+
+// ORDEN **********************************************************************
+
+// Cancelar orden de pedido
+//curl -X DELETE localhost:3000/orden/ord-2
+
+
+// CREAR UNA ORDEN
+// DATOS: *usuario, *direccionEnvio, *metodoPago, propina, *menu, modificadores
+curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
+-d '{"usuario": "647c269de10cf06f7279d47d", "metodoPago": "CONTRA ENTREGA", "direccionEnvio": "Siempre viva 123", "menu": ["647d0e74be2c79e86b306bc0"]}'
+

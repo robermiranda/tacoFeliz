@@ -1,141 +1,105 @@
 import express, { NextFunction, Request, Response } from 'express';
-//import { PrismaClient } from '@prisma/client';
+import { Orden } from '../models/Orden';
+import { Menu } from '../models/Menu';
+import { Modificador } from '../models/Modificador';
+import { stdRes, throwError } from '../util';
+
 
 const router = express.Router();
-//const prisma = new PrismaClient();
 
-const { ordenes } = require('../datos/orden');
-const { menu, modificadores, categoria } = require('../datos/menu');
-const { usuarios } = require('../datos/usuario');
-
-
-export default router.get('/', function (req: Request, res: Response) {
-    // lista de ordenes
-    /*const ordenResponse: string[] = ordenes.map((orden: ordenBasicaT) => orden.id);
-
-    if (ordenResponse.length > 0) {
-        res.send({
-            status: 'ok',
-            data: ordenResponse
-        });
-    }
-    else {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'NO hay ordenes registradas'
-        });
-    }*/
-})
-.get('/', function (req: Request, res: Response) {
-    /*
+export default router.get('/', async function (req: Request, res: Response) {
+    // usuario Adimin
+    // Obtiene la lista de menu
 
     try {
-        const menu = await prisma.menu.findMany();
-        res.send({
-            status: 'ok',
-            msg: `menus obtenidos: ${menu.length}`,
-            data: menu
-        });
+        const menu = await Orden.find({});
+        res.send(stdRes('ok', `menus obtenidos: ${menu.length}`, menu));
     }
-    catch (err) {
-        // console.error('ERROR al obtener la lista de menú', err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'ERROR al obtener lista de menú'
-        });
-    }
-    */
+    catch (err: any) { throwError(err, res) }
 })
-.get('/:ordenId', function (req: Request, res: Response) {
-    // caso de uso (usuario final): verificar disponibilidad y totales
-    //const orden: ordenCompuestaT = ordenes.find((orden: ordenBasicaT) => orden.id === req.params.ordenId);
-/*
-    if ( ! orden) {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'NO se encontro la orden'
-        });
+.get('/:id', async function (req: Request, res: Response) {
+    // usuarios: admin y final
+    // caso de uso: Verificar diponibilidad y totales
+    
+    try {
+        const menu = await Orden.findOne({_id: req.params.id}).exec();
+
+        if (menu) res.send(stdRes('ok', undefined, menu));
+        else res.send(stdRes('warn', 'Sin resultados'));
     }
-    else {
-        const estatusDesc: string | undefined = ordenEstatus.get(orden.estatus);
-        const metodoPagoDesc: string | undefined = metodoPago.get(orden.metodoPago);
-        const menuDesc: any = orden.menu.map((menuId: string) => {
-            return getMenuDesc(menuId);
-        });    
-
-        const ordenResponse = {
-            id: orden.id,
-            hora: orden.hora,
-            estatus: estatusDesc,
-            metodoPago: metodoPagoDesc,
-            usuario: getUsuarioDesc(usuarios, orden.usuario),
-            menu: menuDesc,
-            costo: orden.costo,
-            direccionEnvio: orden.direccionEnvio,
-        }
-
-        res.send({
-            status: 'ok',
-            data: ordenResponse
-        });
-    }*/
+    catch (err: any) { throwError(err, res) }
 })
 .post('/', preValidaOrden, async function (req: Request, res: Response) {
     // usuario final
     // caso de usu: Enviar orden al restaurante
-/*
-    const { usuario, direccionEnvio, metodoPago, menu, modificadores } = req.body;
 
-    const costo: costoT = {
-        totalPlatillos: 0,
-        totalModificadores: 0,
-        propina: 0,
-        subTotal: 0,
-        total: 0
-    }
+    const { usuario, direccionEnvio, metodoPago, menu: menus, modificadores, propina } = req.body;
 
-    const orden: ordenT = {
-        estatus: "PREPARANDO",
-        usuario,
-        direccionEnvio,
-        metodoPago,
-        menu,
-        modificadores,
-        costo
-    };
+    let _propina = 0;
+    if (propina) _propina = Number.parseFloat(propina);
 
+    // Se obtienen los menus y los modificadores de la orden
     try {
-        await prisma.orden.create({
-            data: orden
-        });
+        let totalPlatillos: number = 0;
+        let totalModificadores: number = 0;
+        for (const menu of await Menu.find().where('_id').in(menus).exec()) {
+            if (menu.precio) totalPlatillos += menu.precio;
+        }
+        for (const modificador of await Modificador.find().where('_id').in(modificadores).exec()) {
+            if (modificador.precio) totalModificadores += modificador.precio;
+        }
 
-        res.send({
-            status: 'ok'
-        });
+        // Se calculan subtotal y total
+        const subTotal: number = totalPlatillos + totalModificadores;
+        const total: number = (1 + _propina) * subTotal;
+        const costo: costoT = {
+            totalPlatillos,
+            totalModificadores,
+            propina: _propina,
+            subTotal,
+            total
+        }
+console.log('MENUS.', typeof menus, Array.isArray(menus), menus);
+
+        const orden: ordenT = {
+            usuario,
+            direccionEnvio,
+            metodoPago,
+            menu: menus,
+            modificadores,
+            costo
+        }
+
+        const response = await Orden.create(orden);
+        res.send(stdRes('ok', undefined, {id: response._id}));
     }
-    catch (err) {
-        // console.error('ERROR al insertar modificador', menu.nombre, err);
-        res.status(500).send({
-            status: 'error',
-            msg: 'modificador NO registrado'
-        });
-    }*/
-
+    catch (err: any) { throwError(err, res) }
 })
-.delete('/:id', validaOrdenId, function (req: Request, res: Response) {
-    // caso de uso (usuario final): Cancelar orden de pedido
-    // En este caso, tanto el usuario final como el usuario admin
-    // pueden cancelar un pedido.
-    // La diferencia esta en que el usuario admin puede cancelar cualquier
-    // orden de pedido, mientras que el usuario final unicamente puede
-    // cancelar una orden que le pertenezca a dicho usuario final. Un
-    // usuario final NO puede cancelar una orden de otro usuario final.
-    res.send({
-        status: 'ok',
-        msg: 'Orden cancelada'
-    });
+.patch('estatus', async function (req: Request, res: Response) {
+    // usuarios final y admin
+    // caso de uso: cancelar una orden si su estado es PREPARANDO
+
+    const cancelado: ordenEstatusT = 'CANCELADO';
+    const preparando: ordenEstatusT = 'PREPARANDO';
+    try {
+        const response = await Orden.updateOne(
+            {
+                email: req.body.emailUsuario,
+                estatus: preparando
+            },
+            {estatus: cancelado}
+        );
+
+        let stdres;
+        if (response.modifiedCount === 1) stdres = stdRes('ok');
+        else stdres = stdRes('warn', 'orden NO cancelada');
+
+        res.send(stdres);
+    }
+    catch (err: any) { throwError(err, res) }
 });
 
+// Declaración de tipos  ******************************************************
 
 type ordenEstatusT = "PREPARANDO" | "ENTREGADO" | "CANCELADO";
 
@@ -150,7 +114,8 @@ type costoT = {
 }
 
 type ordenT = {
-    estatus:        ordenEstatusT,
+    hora?:          any,
+    estatus?:       ordenEstatusT,
     usuario:        string,
     direccionEnvio: string,
     metodoPago:     metodoPagoT,
@@ -159,59 +124,52 @@ type ordenT = {
     costo:          costoT
 }
 
-function getMenuDesc (menuId: string) {
+// Funciones Auxiliares  ******************************************************
 
-    const menuDesc = menu.find((_menu: any) => _menu.id === menuId);
-    menuDesc.categoria = categoria[menuDesc.categoria];
+function validaPropina (_propina: any) {
+    
+    const propina = Number.parseFloat(_propina);
+    
+    if (Number.isNaN(propina)) return false;
 
-    const modificadoresDesc: any[] = menuDesc.modificadores.map((modificadorId: string) => {
-        return modificadores.find((modificador: any) => modificador.id === modificadorId);
-    });
+    const index: number = [0, 5, 10, 15].findIndex((x: number) => x === propina);
 
-    menuDesc.modificadores = modificadoresDesc;
-
-    return menuDesc;
+    return (index >= 0);
 }
 
-function getUsuarioDesc (usuarios: any[], usuarioId: string): string {
-    const usuario: any = usuarios.find((usuario: any) => usuario.id === usuarioId);
-    if (usuario) return `${usuario.nombre} ${usuario.apPaterno}`;
-    return usuarioId;
+function validaMetodoPago (metodoPago: any) {
+    
+    if ( ! metodoPago) return false;
+
+    const index: number = ["TARJETA CREDITO", "CONTRA ENTREGA"].findIndex(x => x === metodoPago);
+
+    return (index >= 0);
+}
+
+function validaObjectId (menus: any) {
+    if ( ! Array.isArray(menus)) return false;
+
+    if (menus.length > 20) return false;
+
+    // An Schema.Types.ObjectId must have a length = 24
+    return menus.every(x => x.length === 24);
 }
 
 function preValidaOrden (req: Request, res: Response, next: NextFunction) {
-    const metodoPago: string = req.body.metodoPago;
-    const direccionEnvio: string = req.body.direccionEnvio;
-    const menu: string[] = req.body.menu;
+    
+    const { usuario, direccionEnvio, metodoPago, menu, modificadores, propina } = req.body;
 
-    if (metodoPago && direccionEnvio &&
-        Array.isArray(menu) &&
-        menu.length > 0) {
-        
+    if (usuario &&
+        direccionEnvio && direccionEnvio.length <= 50 &&
+        validaMetodoPago(metodoPago) &&
+        validaObjectId(menu) &&
+        ( ! modificadores || validaObjectId(modificadores)) &&
+        ( ! propina || validaPropina(propina))) {
+
         next();
     }
-    else res.status(400).send({
-        status: 'warn',
-        msg: 'Los siguientes datos son obligatorios: direccion de envio menu y método de pago'
-    });
-}
-
-function validaOrdenId (req: Request, res: Response, next: NextFunction) {
-    /*
-    if (req.params.id) {
-        const index: number = ordenes.findIndex((orden: ordenT) => orden.id === req.params.id);
-        if (index > -1) next();
-        else {
-            res.status(400).send({
-                status: 'warn',
-                msg: 'Orden NO encontrada'
-            });    
-        }
-    }
     else {
-        res.status(400).send({
-            status: 'warn',
-            msg: 'Se debe especificar el id de la orden'
-        });
-    }*/
+        res.status(400)
+        .send(stdRes('warn', 'Los datos de entrada NO son validos'));
+    }
 }
