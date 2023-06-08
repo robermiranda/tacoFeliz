@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { Menu } from '../models/Menu';
-import { stdRes } from '../util';
+import { stdRes, throwError } from '../util';
 
 const router = express.Router();
 
@@ -12,10 +12,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         const menu = await Menu.find({});
         res.send(stdRes('ok', `menus obtenidos: ${menu.length}`, menu));
     }
-    catch (err: any) {
-        res.status(500).send(stdRes('error', err.meta.cause));
-        throw err;
-    }
+    catch (err: any) { throwError(err, res) }
 })
 .get('/:nombre', async function (req: Request, res: Response) {
     // usuarios: admin y final
@@ -27,10 +24,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         if (menu) res.send(stdRes('ok', undefined, menu));
         else res.send(stdRes('warn', 'Sin resultados'));
     }
-    catch (err: any) {
-        res.status(500).send(stdRes('error', err.meta.cause));
-        throw err;
-    }
+    catch (err: any) { throwError(err, res) }
 })
 .post('/', validaMenu, async function (req: Request, res: Response) {
     // usuario: Admin
@@ -53,13 +47,9 @@ export default router.get('/', async function (req: Request, res: Response) {
 
     try {
         const response = await Menu.create(menu);
-        console.log('INSERT DOCUMENT MENU ERSPONSE', response);
         res.send(stdRes('ok', undefined, {id: response._id}));
     }
-    catch (err: any) {
-        res.status(500).send(stdRes('error', err.meta.cause));
-        throw err;
-    }
+    catch (err: any) { throwError(err, res) }
 })
 .patch('/', validaMenuParaEditar, async function (req: Request, res: Response) {
     // usuario admin
@@ -85,10 +75,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         if (response.modifiedCount === 1) res.send(stdRes('ok'));
         else res.status(400).send(stdRes('warn', 'modificador NO actualizado'));
     }
-    catch (err: any) {
-        res.status(500).send(stdRes('error', err.meta.cause));
-        throw err;
-    }
+    catch (err: any) { throwError(err, res) }
 })
 .delete('/:nombre', validaNombre, async function (req: Request, res: Response) {
     // usuario admin
@@ -99,10 +86,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         if (response.deletedCount === 1) res.send(stdRes('ok'));
         else res.send(stdRes('warn', 'menu NO eliminado'));
     }
-    catch (err: any) {
-        res.status(500).send(stdRes('error', err.meta.cause));
-        throw err;
-    }
+    catch (err: any) { throwError(err, res) }
 })
 
 // Declaración de tipos  ******************************************************
