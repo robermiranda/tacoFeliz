@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stdRes = void 0;
+exports.throwError = exports.stdRes = void 0;
 function stdRes(status, msg, data) {
     const datos = { status };
     if (msg)
@@ -11,3 +11,13 @@ function stdRes(status, msg, data) {
     return response;
 }
 exports.stdRes = stdRes;
+function throwError(err, res) {
+    let msg = 'ERROR';
+    if (err.message)
+        msg = err.message;
+    else if (err.meta && err.meta.cause)
+        msg = err.meta.cause;
+    res.status(500).send(stdRes('error', msg));
+    throw err;
+}
+exports.throwError = throwError;

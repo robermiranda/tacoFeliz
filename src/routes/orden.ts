@@ -17,7 +17,7 @@ export default router.get('/', async function (req: Request, res: Response) {
     }
     catch (err: any) { throwError(err, res) }
 })
-.get('/:id', async function (req: Request, res: Response) {
+.get('/:id', validaOrdenId, async function (req: Request, res: Response) {
     // usuarios: admin y final
     // caso de uso: Verificar diponibilidad y totales
     
@@ -59,7 +59,6 @@ export default router.get('/', async function (req: Request, res: Response) {
             subTotal,
             total
         }
-console.log('MENUS.', typeof menus, Array.isArray(menus), menus);
 
         const orden: ordenT = {
             usuario,
@@ -75,16 +74,17 @@ console.log('MENUS.', typeof menus, Array.isArray(menus), menus);
     }
     catch (err: any) { throwError(err, res) }
 })
-.patch('estatus', async function (req: Request, res: Response) {
+.patch('/estatus', async function (req: Request, res: Response) {
     // usuarios final y admin
-    // caso de uso: cancelar una orden si su estado es PREPARANDO
+    // caso de uso: Cancelar una orden si su estado es PREPARANDO
 
     const cancelado: ordenEstatusT = 'CANCELADO';
     const preparando: ordenEstatusT = 'PREPARANDO';
+
     try {
         const response = await Orden.updateOne(
             {
-                email: req.body.emailUsuario,
+                _id: req.body.id,
                 estatus: preparando
             },
             {estatus: cancelado}
@@ -146,9 +146,11 @@ function validaMetodoPago (metodoPago: any) {
     return (index >= 0);
 }
 
-function validaObjectId (menus: any) {
+function validaArrayIds (menus: any) {
+    
     if ( ! Array.isArray(menus)) return false;
 
+    // Se limita a un array de 19 id's
     if (menus.length > 20) return false;
 
     // An Schema.Types.ObjectId must have a length = 24
@@ -162,8 +164,8 @@ function preValidaOrden (req: Request, res: Response, next: NextFunction) {
     if (usuario &&
         direccionEnvio && direccionEnvio.length <= 50 &&
         validaMetodoPago(metodoPago) &&
-        validaObjectId(menu) &&
-        ( ! modificadores || validaObjectId(modificadores)) &&
+        validaArrayIds(menu) &&
+        ( ! modificadores || validaArrayIds(modificadores)) &&
         ( ! propina || validaPropina(propina))) {
 
         next();
@@ -171,5 +173,13 @@ function preValidaOrden (req: Request, res: Response, next: NextFunction) {
     else {
         res.status(400)
         .send(stdRes('warn', 'Los datos de entrada NO son validos'));
+    }
+}
+
+function validaOrdenId (req: Request, res: Response, next: NextFunction) {
+    if (req.params.id.length === 24) next();
+    else {
+        res.status(400)
+        .send(stdRes('warn', 'Id NO válido. Este debe ser de 24 hex chars.'));
     }
 }

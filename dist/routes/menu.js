@@ -25,8 +25,7 @@ exports.default = router.get('/', function (req, res) {
             res.send((0, util_1.stdRes)('ok', `menus obtenidos: ${menu.length}`, menu));
         }
         catch (err) {
-            res.status(500).send((0, util_1.stdRes)('error', err.meta.cause));
-            throw err;
+            (0, util_1.throwError)(err, res);
         }
     });
 })
@@ -42,8 +41,7 @@ exports.default = router.get('/', function (req, res) {
                 res.send((0, util_1.stdRes)('warn', 'Sin resultados'));
         }
         catch (err) {
-            res.status(500).send((0, util_1.stdRes)('error', err.meta.cause));
-            throw err;
+            (0, util_1.throwError)(err, res);
         }
     });
 })
@@ -67,12 +65,10 @@ exports.default = router.get('/', function (req, res) {
         const menu = datos;
         try {
             const response = yield Menu_1.Menu.create(menu);
-            console.log('INSERT DOCUMENT MENU ERSPONSE', response);
             res.send((0, util_1.stdRes)('ok', undefined, { id: response._id }));
         }
         catch (err) {
-            res.status(500).send((0, util_1.stdRes)('error', err.meta.cause));
-            throw err;
+            (0, util_1.throwError)(err, res);
         }
     });
 })
@@ -106,8 +102,7 @@ exports.default = router.get('/', function (req, res) {
                 res.status(400).send((0, util_1.stdRes)('warn', 'modificador NO actualizado'));
         }
         catch (err) {
-            res.status(500).send((0, util_1.stdRes)('error', err.meta.cause));
-            throw err;
+            (0, util_1.throwError)(err, res);
         }
     });
 })
@@ -123,8 +118,7 @@ exports.default = router.get('/', function (req, res) {
                 res.send((0, util_1.stdRes)('warn', 'menu NO eliminado'));
         }
         catch (err) {
-            res.status(500).send((0, util_1.stdRes)('error', err.meta.cause));
-            throw err;
+            (0, util_1.throwError)(err, res);
         }
     });
 });

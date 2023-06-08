@@ -68,8 +68,9 @@ curl -X DELETE localhost:3000/menu/pescado%20a%20la%20planca
 
 // ORDEN **********************************************************************
 
-// Cancelar orden de pedido
-//curl -X DELETE localhost:3000/orden/ord-2
+// CANCELAR
+curl -X PATCH localhost:3000/orden/estatus -H 'Content-Type: application/json' \
+-d '{"id": "6481ef0319fb216c34f4d623"}'
 
 
 // CREAR UNA ORDEN

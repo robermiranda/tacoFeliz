@@ -73,12 +73,10 @@ db.createCollection("menus", {
 db.createCollection("ordenes", {
 	validator: {
 		$jsonSchema: {	
-			bsonType: "object",
-			required: ["usuario", "estatus", "menu", "metodoPago", "costo", "direccionEnvio"],
+			required: ["usuario", "estatus", "menu"],
 			properties: {
 				usuario: {
-					bsonType: "string",
-					maxLength: 24,
+					bsonType: "objectId",
 					description: "usuario final que posee esta orden"
 				},
 				estatus: {
@@ -92,12 +90,12 @@ db.createCollection("ordenes", {
 					description: "tarjeta crédito o contra entrega"
 				},
 				menu: {
-					bsonType: "object",
-					description: "El menú"
+					bsonType: "array",
+					description: "Lista de menus"
 				},
 				modificadores: {
-					bsonType: "object",
-					description: "Modificadores al menú"
+					bsonType: "array",
+					description: "Lista de modificadores al menú"
 				},
 				costo: {
 					bsonType: "object",

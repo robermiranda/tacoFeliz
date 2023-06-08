@@ -23,8 +23,8 @@ export function stdRes (status: statusT, msg?: msgT, data?: any) {
 export function throwError (err: any, res: Response)  {
     
     let msg = 'ERROR';
-    if (err.meta && err.meta.cause) msg = err.meta.cause;
-    else if (err.errInfo && err.errInfo.details) msg = JSON.stringify(err.errInfo.details);
+    if (err.message) msg = err.message;
+    else if (err.meta && err.meta.cause) msg = err.meta.cause;
 
     res.status(500).send(stdRes('error', msg));
     throw err;

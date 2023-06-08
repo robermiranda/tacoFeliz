@@ -1,13 +1,15 @@
-import { Schema, model } from "mongoose";
-
-const ordenSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Orden = void 0;
+const mongoose_1 = require("mongoose");
+const ordenSchema = new mongoose_1.Schema({
     hora: {
         type: Date,
         default: Date.now,
         required: true
     },
     usuario: {
-        type: Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'USUARIO',
         required: true
     },
@@ -28,15 +30,15 @@ const ordenSchema = new Schema({
         required: true
     },
     menu: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Menu',
-        required: true
-    }],
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Menu',
+            required: true
+        }],
     modificadores: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Modificador',
-        required: true
-    }],
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Modificador',
+            required: true
+        }],
     costo: {
         totalPlatillos: {
             type: Number,
@@ -64,7 +66,5 @@ const ordenSchema = new Schema({
             required: true
         },
     }
-}, {versionKey: false});
-
-
-export const Orden = model ("Ordene", ordenSchema);
+}, { versionKey: false });
+exports.Orden = (0, mongoose_1.model)("Ordene", ordenSchema);
