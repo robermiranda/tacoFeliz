@@ -18,8 +18,7 @@ export const app: Application = express()
     res.send({status: 'warn', msg: '404. Recurso no encontrado.'});    
 })
 .use(function (err: Error, req: Request, res: Response, next: NextFunction) {
-    console.error('ERROR 500.', err.message);
-    console.error('ERROR DETALLE.', err);
+    console.error(err);
     res.status(500);
     res.send({status: 'error', msg: 'ERROR en el servidor.'});
 });
