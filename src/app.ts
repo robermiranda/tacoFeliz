@@ -5,7 +5,6 @@ import rutaMenu from './routes/menu';
 import rutaModificador from './routes/modificador'
 import rutaOrden from './routes/orden';
 import rutaUsuario from './routes/usuario';
-import rutaSesion from './routes/sesion';
 import 'dotenv/config';
 
 export const app: Application = express()
@@ -15,7 +14,6 @@ export const app: Application = express()
 .use('/modificador', rutaModificador)
 .use('/orden', rutaOrden)
 .use('/usuario', rutaUsuario)
-.use('/sesion', rutaSesion)
 .use(function (req: Request, res: Response) {
     res.send({status: 'warn', msg: '404. Recurso no encontrado.'});    
 })

@@ -11,7 +11,6 @@ const menu_1 = __importDefault(require("./routes/menu"));
 const modificador_1 = __importDefault(require("./routes/modificador"));
 const orden_1 = __importDefault(require("./routes/orden"));
 const usuario_1 = __importDefault(require("./routes/usuario"));
-const sesion_1 = __importDefault(require("./routes/sesion"));
 require("dotenv/config");
 exports.app = (0, express_1.default)()
     .use(body_parser_1.default.json())
@@ -20,7 +19,6 @@ exports.app = (0, express_1.default)()
     .use('/modificador', modificador_1.default)
     .use('/orden', orden_1.default)
     .use('/usuario', usuario_1.default)
-    .use('/sesion', sesion_1.default)
     .use(function (req, res) {
     res.send({ status: 'warn', msg: '404. Recurso no encontrado.' });
 })
