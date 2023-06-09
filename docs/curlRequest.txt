@@ -78,3 +78,9 @@ curl -X PATCH localhost:3000/orden/estatus -H 'Content-Type: application/json' \
 curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
 -d '{"usuario": "647c269de10cf06f7279d47d", "metodoPago": "CONTRA ENTREGA", "direccionEnvio": "Siempre viva 123", "menu": ["647d0e74be2c79e86b306bc0"]}'
 
+curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
+-d '{"usuario": "647c269de10cf06f7279d47d", "metodoPago": "CONTRA ENTREGA", "direccionEnvio": "Av. Cuitlahuac No. 453", "menu": ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca9"]}'
+
+// Probando insertar un menu id que no existe
+curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
+-d '{"usuario": "647c269de10cf06f7279d47d", "metodoPago": "CONTRA ENTREGA", "direccionEnvio": "Av. Cuitlahuac No. 453", "menu": ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca0"]}'
