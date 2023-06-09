@@ -2,12 +2,12 @@ import express, { NextFunction, Request, Response } from 'express';
 import { Orden } from '../models/Orden';
 import { Menu } from '../models/Menu';
 import { Modificador } from '../models/Modificador';
+import { Usuario } from '../models/Usuario';
 import { stdRes, throwError } from '../util';
 
 
-const router = express.Router();
-
-export default router.get('/', async function (req: Request, res: Response) {
+export default express.Router()
+.get('/', async function (req: Request, res: Response) {
     // usuario Adimin
     // Obtiene la lista de menu
 
@@ -29,7 +29,9 @@ export default router.get('/', async function (req: Request, res: Response) {
     }
     catch (err: any) { throwError(err, res) }
 })
-.post('/', preValidaOrden, async function (req: Request, res: Response) {
+.post('/', preValidaOrden,
+    validaMenuModificadoresIds,
+    async function (req: Request, res: Response) {
     // usuario final
     // caso de usu: Enviar orden al restaurante
 
@@ -42,6 +44,7 @@ export default router.get('/', async function (req: Request, res: Response) {
     try {
         let totalPlatillos: number = 0;
         let totalModificadores: number = 0;
+        
         for (const menu of await Menu.find().where('_id').in(menus).exec()) {
             if (menu.precio) totalPlatillos += menu.precio;
         }
@@ -146,26 +149,17 @@ function validaMetodoPago (metodoPago: any) {
     return (index >= 0);
 }
 
-function validaArrayIds (menus: any) {
+async function preValidaOrden (req: Request, res: Response, next: NextFunction) {
     
-    if ( ! Array.isArray(menus)) return false;
+    const { usuario, direccionEnvio, metodoPago, menu, propina } = req.body;
 
-    // Se limita a un array de 19 id's
-    if (menus.length > 20) return false;
-
-    // An Schema.Types.ObjectId must have a length = 24
-    return menus.every(x => x.length === 24);
-}
-
-function preValidaOrden (req: Request, res: Response, next: NextFunction) {
-    
-    const { usuario, direccionEnvio, metodoPago, menu, modificadores, propina } = req.body;
-
-    if (usuario &&
-        direccionEnvio && direccionEnvio.length <= 50 &&
+    if ( ! await validaUsuarioId(usuario)) {
+        res.status(400)
+        .send(stdRes('warn', 'USUARIO ID NO VALIDO'));
+    }
+    else if (direccionEnvio && direccionEnvio.length <= 50 &&
         validaMetodoPago(metodoPago) &&
-        validaArrayIds(menu) &&
-        ( ! modificadores || validaArrayIds(modificadores)) &&
+        menu &&
         ( ! propina || validaPropina(propina))) {
 
         next();
@@ -181,5 +175,62 @@ function validaOrdenId (req: Request, res: Response, next: NextFunction) {
     else {
         res.status(400)
         .send(stdRes('warn', 'ID NO VALIDO'));
+    }
+}
+
+async function validaIds (ids: string[], Model: any): Promise<boolean> {
+    let notIncluded = false;
+
+    if ( ! Array.isArray(ids)) return false;
+    
+    const docs = await Model.find({}).exec();
+    const modelIds: string[] = docs.map((doc: any) => doc._id.toString());
+
+    if ( ! modelIds) return false;
+
+    for (const id of ids) {
+        if ( ! modelIds.includes(id))  {
+            notIncluded = true;
+            break;
+        };
+    }
+
+    if (notIncluded) return false;
+    
+    return true;
+}
+
+async function validaUsuarioId (usuarioId: string): Promise<boolean> {
+    const usuario = await Usuario.findById(usuarioId).exec();
+    return usuario ? true: false;
+}
+
+async function validaMenuModificadoresIds (req: Request, res: Response, next: NextFunction) {
+    
+    const validaMenuIds = await validaIds(req.body.menu, Menu);
+
+    if ( ! validaMenuIds) {
+        res.status(400)
+        .send(stdRes('warn', 'MENU ID NO VALIDO'));
+    }
+    else {
+        const modificadores = req.body.modificadores;
+
+        // Los modificadores son opcionales
+        // por lo que puede NO haber modificadores
+        if ( ! modificadores) next ();
+        else {
+            // Si hay modificadores entonces
+            // se procede a validarlos
+            const validaModificadorIds = await validaIds(req.body.modificadores, Modificador);
+
+            if ( ! validaModificadorIds) {
+                res.status(400)
+                .send(stdRes('warn', 'MODIFICADOR ID NO VALIDO'));
+            }
+            else {
+                next();            
+            }
+        }
     }
 }
