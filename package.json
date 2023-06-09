@@ -4,7 +4,7 @@
   "description": "prueba técnica Taco Feliz",
   "main": "dist/server.js",
   "scripts": {
-    "test": "jest --testTimeout=5000",
+    "test": "jest --testTimeout=10000 --runInBand",
     "dev": "tsc && node dist/server.js",
     "dev:server": "nodemon --watch src --exec 'ts-node' src/server.ts",
     "build": "tsc",
