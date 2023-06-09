@@ -25,7 +25,7 @@ export default router.get('/', async function (req: Request, res: Response) {
         const menu = await Orden.findOne({_id: req.params.id}).exec();
 
         if (menu) res.send(stdRes('ok', undefined, menu));
-        else res.send(stdRes('warn', 'Sin resultados'));
+        else res.send(stdRes('warn', 'SIN RESULTADOS'));
     }
     catch (err: any) { throwError(err, res) }
 })
@@ -172,7 +172,7 @@ function preValidaOrden (req: Request, res: Response, next: NextFunction) {
     }
     else {
         res.status(400)
-        .send(stdRes('warn', 'Los datos de entrada NO son validos'));
+        .send(stdRes('warn', 'DATOS DE ENTRADA NO VALIDOS'));
     }
 }
 
@@ -180,6 +180,6 @@ function validaOrdenId (req: Request, res: Response, next: NextFunction) {
     if (req.params.id.length === 24) next();
     else {
         res.status(400)
-        .send(stdRes('warn', 'Id NO válido. Este debe ser de 24 hex chars.'));
+        .send(stdRes('warn', 'ID NO VALIDO'));
     }
 }

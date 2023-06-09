@@ -19,7 +19,7 @@ const ordenSchema = new Schema({
     },
     metodoPago: {
         type: String,
-        enum: ["TARGETA CREDITO", "CONTRA ENTREGA"],
+        enum: ["TARJETA CREDITO", "CONTRA ENTREGA"],
         required: true
     },
     direccionEnvio: {
