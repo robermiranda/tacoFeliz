@@ -6,6 +6,10 @@ Este es un repositorio público que corresponde a una prueba técnica cuyo statu
 - Crear, editar, listar y eliminar elementos modificadores
 - Creación de usuarios
 - Registro en aplicación
+- Ver menú
+- Verificar disponibilidad y totales
+- Enviar orden al restaurante
+- Cancelar pedido
 - Persistencia de datos en Mongodb Atlas
 - Despliegue de aplicación en render.com
 
@@ -123,11 +127,9 @@ Se pueden seguir los ejemplos mencionados en el archivo *docs/curlRequest.txt* p
 
 El status del proyecto es: *en desarrollo* y aún falta por implementar muchas características:
 
-- Terminar los casos de uso
-- pruebas unitarias (con *jest*)
 - envio de emails al registrarse un usuario
 - manejo de sesiones (con *jwt*)
-- ordenes de menú
+- Cambio automático des estatus de la orden de PREPARANDO a ENTREGADO después de 5 minutos
 - encriptar contraseñas (no requerido)
 
 
