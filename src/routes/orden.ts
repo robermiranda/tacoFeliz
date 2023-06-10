@@ -22,54 +22,74 @@ export default express.Router()
     // caso de uso: Verificar diponibilidad y totales
     
     try {
-        const menu = await Orden.findOne({_id: req.params.id}).exec();
+        const menu = await Orden.findById(req.params.id).exec();
 
         if (menu) res.send(stdRes('ok', undefined, menu));
         else res.send(stdRes('warn', 'SIN RESULTADOS'));
     }
     catch (err: any) { throwError(err, res) }
 })
-.post('/', preValidaOrden,
-    validaMenuModificadoresIds,
-    async function (req: Request, res: Response) {
+.post('/totales', async function (req: Request, res: Response) {
+    // usuario fianl
+    // caso uso: verificar disponibilidad y totales
+    // devuleve el total de la orden desglozada
+
+    const { menu: menus, modificadores, propina: _propina } = req.body;
+
+    try {
+        let propina = getPropina(_propina);
+        const menuDocs = await Menu.find().where('_id').in(menus).exec();
+        const modificadoresDocs = await Modificador.find().where('_id').in(modificadores).exec();
+        
+        const totales: costoT = getTotales (menuDocs, modificadoresDocs, propina);
+        
+        const menusNoDisponibles = menuDocs
+            .filter((menu: any) => ! menu.disponibilidad)
+            .map((menu: any) => {
+                return {
+                    id: menu._id,
+                    nombre: menu.nombre
+                }
+            });
+
+        const modificadoresNoDisponibles = modificadoresDocs
+            .filter((modificador: any) => ! modificador.disponibilidad)
+            .map((modificador: any) => {
+                return {
+                    id: modificador._id,
+                    nombre: modificador.nombre
+                }
+            });
+        
+        res.send(stdRes('ok', undefined, {
+            totales,
+            menusNoDisponibles,
+            modificadoresNoDisponibles
+        }));
+        
+    }
+    catch (err: any) { throwError(err, res, 'ERROR AL OBTENER TOTALES') }
+})
+.post('/', preValidaOrden, async function (req: Request, res: Response) {
     // usuario final
     // caso de usu: Enviar orden al restaurante
 
-    const { usuario, direccionEnvio, metodoPago, menu: menus, modificadores, propina } = req.body;
+    const { usuario, direccionEnvio, metodoPago, menu: menus, modificadores, propina: _propina } = req.body;
 
-    let _propina = 0;
-    if (propina) _propina = Number.parseFloat(propina);
-
-    // Se obtienen los menus y los modificadores de la orden
     try {
-        let totalPlatillos: number = 0;
-        let totalModificadores: number = 0;
+        let propina = getPropina(_propina);
+        const menuDocs = await Menu.find().where('_id').in(menus).exec();
+        const modificadoresDocs = await Modificador.find().where('_id').in(modificadores).exec();
         
-        for (const menu of await Menu.find().where('_id').in(menus).exec()) {
-            if (menu.precio) totalPlatillos += menu.precio;
-        }
-        for (const modificador of await Modificador.find().where('_id').in(modificadores).exec()) {
-            if (modificador.precio) totalModificadores += modificador.precio;
-        }
-
-        // Se calculan subtotal y total
-        const subTotal: number = totalPlatillos + totalModificadores;
-        const total: number = (1 + _propina) * subTotal;
-        const costo: costoT = {
-            totalPlatillos,
-            totalModificadores,
-            propina: _propina,
-            subTotal,
-            total
-        }
+        const totales: costoT = getTotales (menuDocs, modificadoresDocs, propina);
 
         const orden: ordenT = {
             usuario,
             direccionEnvio,
             metodoPago,
-            menu: menus,
-            modificadores,
-            costo
+            menu: menuDocs.map((menu: any) => menu._id),
+            modificadores: modificadoresDocs.map((modificador: any) => modificador._id),
+            costo: totales
         }
 
         const response = await Orden.create(orden);
@@ -129,15 +149,16 @@ type ordenT = {
 
 // Funciones Auxiliares  ******************************************************
 
-function validaPropina (_propina: any) {
+function getPropina (_propina: any): number {
     
-    const propina = Number.parseFloat(_propina);
+    let propina = 0;
     
-    if (Number.isNaN(propina)) return false;
+    if (_propina) {
+        const pparsed = Number.parseFloat(_propina);
+        if ( ! Number.isNaN(pparsed) && [0, 0.5, 0.1, 0.15].includes(pparsed)) propina = pparsed;
+    }
 
-    const index: number = [0, 5, 10, 15].findIndex((x: number) => x === propina);
-
-    return (index >= 0);
+    return propina;
 }
 
 function validaMetodoPago (metodoPago: any) {
@@ -151,16 +172,15 @@ function validaMetodoPago (metodoPago: any) {
 
 async function preValidaOrden (req: Request, res: Response, next: NextFunction) {
     
-    const { usuario, direccionEnvio, metodoPago, menu, propina } = req.body;
+    const { usuario, direccionEnvio, metodoPago } = req.body;
 
     if ( ! await validaUsuarioId(usuario)) {
         res.status(400)
         .send(stdRes('warn', 'USUARIO ID NO VALIDO'));
     }
-    else if (direccionEnvio && direccionEnvio.length <= 50 &&
-        validaMetodoPago(metodoPago) &&
-        menu &&
-        ( ! propina || validaPropina(propina))) {
+    else if (direccionEnvio &&
+        direccionEnvio.length <= 50 &&
+        validaMetodoPago(metodoPago)) {
 
         next();
     }
@@ -178,59 +198,36 @@ function validaOrdenId (req: Request, res: Response, next: NextFunction) {
     }
 }
 
-async function validaIds (ids: string[], Model: any): Promise<boolean> {
-    let notIncluded = false;
-
-    if ( ! Array.isArray(ids)) return false;
-    
-    const docs = await Model.find({}).exec();
-    const modelIds: string[] = docs.map((doc: any) => doc._id.toString());
-
-    if ( ! modelIds) return false;
-
-    for (const id of ids) {
-        if ( ! modelIds.includes(id))  {
-            notIncluded = true;
-            break;
-        };
-    }
-
-    if (notIncluded) return false;
-    
-    return true;
-}
 
 async function validaUsuarioId (usuarioId: string): Promise<boolean> {
     const usuario = await Usuario.findById(usuarioId).exec();
     return usuario ? true: false;
 }
 
-async function validaMenuModificadoresIds (req: Request, res: Response, next: NextFunction) {
+function getTotales (menus: any[], modificadores: any[], propina: number): costoT {
     
-    const validaMenuIds = await validaIds(req.body.menu, Menu);
-
-    if ( ! validaMenuIds) {
-        res.status(400)
-        .send(stdRes('warn', 'MENU ID NO VALIDO'));
+    let totalPlatillos: number = 0;
+    let totalModificadores: number = 0;
+    
+    for (const menu of menus) {
+        if (menu.disponibilidad && menu.precio) totalPlatillos += menu.precio;
     }
-    else {
-        const modificadores = req.body.modificadores;
-
-        // Los modificadores son opcionales
-        // por lo que puede NO haber modificadores
-        if ( ! modificadores) next ();
-        else {
-            // Si hay modificadores entonces
-            // se procede a validarlos
-            const validaModificadorIds = await validaIds(req.body.modificadores, Modificador);
-
-            if ( ! validaModificadorIds) {
-                res.status(400)
-                .send(stdRes('warn', 'MODIFICADOR ID NO VALIDO'));
-            }
-            else {
-                next();            
-            }
+    
+    for (const modificador of modificadores) {
+        if (modificador.disponibilidad && modificador.precio) {
+            totalModificadores += modificador.precio;
         }
+    }
+
+    // Se calculan subtotal y total
+    const subTotal: number = totalPlatillos + totalModificadores;
+    const totalStr: string = Number.parseFloat(`${(1 + propina) * subTotal}`).toFixed(2);
+    
+    return {
+        totalPlatillos,
+        totalModificadores,
+        propina,
+        subTotal,
+        total: Number.parseFloat(totalStr)
     }
 }
