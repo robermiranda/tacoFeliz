@@ -66,7 +66,7 @@ describe("EXECUTE HTTP POST /orden", () => {
     // modificadores Ids también existen
     // usuarios también es valido
     // En este caso la orden SI es creada
-    test.skip('POST /orden valido', async () => {
+    test('POST /orden [ petición con datos válidos ]', async () => {
         const res = await request(app).post('/orden').send({
             usuario: '647c269de10cf06f7279d47d',
             metodoPago: 'CONTRA ENTREGA',
@@ -82,7 +82,8 @@ describe("EXECUTE HTTP POST /orden", () => {
     });
 
     // validando post orden con un menu id que no existe
-    // En estes caso la orden NO es creada
+    // En estes caso la orden SI es creada
+    // pero no inserta el menu inválido
     test('POST /orden con menu Id NO valido', async () => {
         const res = await request(app).post('/orden').send({
             usuario: '647c269de10cf06f7279d47d',
@@ -93,26 +94,24 @@ describe("EXECUTE HTTP POST /orden", () => {
             propina: 0
         });
 
-        expect(res.statusCode).toBe(400);
-        expect(res.body.status).toBe('warn');
-        expect(res.body.msg).toBe('MENU ID NO VALIDO');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.status).toBe('ok');
     });
 
     // validando post orden con un modificador id que no existe
-    // En estes caso la orden NO es creada
-    test('POST /orden con modificador Id NO valido', async () => {
+    // En estes caso la orden SI es creada pero no ingresa el modificador no valido
+    test('POST /orden [ con modificador Id NO valido ]', async () => {
         const res = await request(app).post('/orden').send({
             usuario: '647c269de10cf06f7279d47d',
             metodoPago: 'CONTRA ENTREGA',
             direccionEnvio: 'Av. Cuitlahuac No. 453, Edif. 15 A 203',
             menu: ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca9"],
-            modificadores: ["647cc4805cc6c871cab3258d", "647cc6415cc6c871cab3259a"],
+            modificadores: ["647cc4805cc6c871cab3258d", "647cc6415cc6c871cab32591"],
             propina: 0
         });
 
-        expect(res.statusCode).toBe(400);
-        expect(res.body.status).toBe('warn');
-        expect(res.body.msg).toBe('MODIFICADOR ID NO VALIDO');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.status).toBe('ok');
     });
 
     test('POST /orden con usuario id NO válido', async () => {
@@ -129,4 +128,16 @@ describe("EXECUTE HTTP POST /orden", () => {
         expect(res.body.status).toBe('warn');
         expect(res.body.msg).toBe('USUARIO ID NO VALIDO');
     });
+
+    test('POST /orden/totales [petición válida]', async () => {
+        const res = await request(app).post('/orden/totales').send({
+            menu: ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca9"],
+            modificadores: ["647cc4805cc6c871cab3258d", "647cc6415cc6c871cab32590"],
+            propina: 0.1
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.status).toBe('ok');
+        expect(res.body.data.totales.total).toBe(362.45);
+    })
 });
