@@ -1,7 +1,7 @@
 import { describe, expect, beforeAll, afterAll, it, test } from '@jest/globals';
 import { connect, connection } from "mongoose";
 import request from "supertest";
-import { app } from "../src/app";
+import { app } from "../app";
 
 
 beforeAll(async () => {

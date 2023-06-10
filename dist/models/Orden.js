@@ -21,7 +21,7 @@ const ordenSchema = new mongoose_1.Schema({
     },
     metodoPago: {
         type: String,
-        enum: ["TARGETA CREDITO", "CONTRA ENTREGA"],
+        enum: ["TARJETA CREDITO", "CONTRA ENTREGA"],
         required: true
     },
     direccionEnvio: {

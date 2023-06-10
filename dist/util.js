@@ -11,13 +11,12 @@ function stdRes(status, msg, data) {
     return response;
 }
 exports.stdRes = stdRes;
-function throwError(err, res) {
-    let msg = 'ERROR';
+function throwError(err, res, _msg) {
+    let msg = _msg ? _msg : 'ERROR';
     if (err.message)
         msg = err.message;
     else if (err.meta && err.meta.cause)
         msg = err.meta.cause;
     res.status(500).send(stdRes('error', msg));
-    throw err;
 }
 exports.throwError = throwError;

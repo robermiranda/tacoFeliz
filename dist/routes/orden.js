@@ -16,9 +16,10 @@ const express_1 = __importDefault(require("express"));
 const Orden_1 = require("../models/Orden");
 const Menu_1 = require("../models/Menu");
 const Modificador_1 = require("../models/Modificador");
+const Usuario_1 = require("../models/Usuario");
 const util_1 = require("../util");
-const router = express_1.default.Router();
-exports.default = router.get('/', function (req, res) {
+exports.default = express_1.default.Router()
+    .get('/', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // usuario Adimin
         // Obtiene la lista de menu
@@ -36,14 +37,52 @@ exports.default = router.get('/', function (req, res) {
         // usuarios: admin y final
         // caso de uso: Verificar diponibilidad y totales
         try {
-            const menu = yield Orden_1.Orden.findOne({ _id: req.params.id }).exec();
+            const menu = yield Orden_1.Orden.findById(req.params.id).exec();
             if (menu)
                 res.send((0, util_1.stdRes)('ok', undefined, menu));
             else
-                res.send((0, util_1.stdRes)('warn', 'Sin resultados'));
+                res.send((0, util_1.stdRes)('warn', 'SIN RESULTADOS'));
         }
         catch (err) {
             (0, util_1.throwError)(err, res);
+        }
+    });
+})
+    .post('/totales', function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // usuario fianl
+        // caso uso: verificar disponibilidad y totales
+        // devuleve el total de la orden desglozada
+        const { menu: menus, modificadores, propina: _propina } = req.body;
+        try {
+            let propina = getPropina(_propina);
+            const menuDocs = yield Menu_1.Menu.find().where('_id').in(menus).exec();
+            const modificadoresDocs = yield Modificador_1.Modificador.find().where('_id').in(modificadores).exec();
+            const totales = getTotales(menuDocs, modificadoresDocs, propina);
+            const menusNoDisponibles = menuDocs
+                .filter((menu) => !menu.disponibilidad)
+                .map((menu) => {
+                return {
+                    id: menu._id,
+                    nombre: menu.nombre
+                };
+            });
+            const modificadoresNoDisponibles = modificadoresDocs
+                .filter((modificador) => !modificador.disponibilidad)
+                .map((modificador) => {
+                return {
+                    id: modificador._id,
+                    nombre: modificador.nombre
+                };
+            });
+            res.send((0, util_1.stdRes)('ok', undefined, {
+                totales,
+                menusNoDisponibles,
+                modificadoresNoDisponibles
+            }));
+        }
+        catch (err) {
+            (0, util_1.throwError)(err, res, 'ERROR AL OBTENER TOTALES');
         }
     });
 })
@@ -51,39 +90,19 @@ exports.default = router.get('/', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // usuario final
         // caso de usu: Enviar orden al restaurante
-        const { usuario, direccionEnvio, metodoPago, menu: menus, modificadores, propina } = req.body;
-        let _propina = 0;
-        if (propina)
-            _propina = Number.parseFloat(propina);
-        // Se obtienen los menus y los modificadores de la orden
+        const { usuario, direccionEnvio, metodoPago, menu: menus, modificadores, propina: _propina } = req.body;
         try {
-            let totalPlatillos = 0;
-            let totalModificadores = 0;
-            for (const menu of yield Menu_1.Menu.find().where('_id').in(menus).exec()) {
-                if (menu.precio)
-                    totalPlatillos += menu.precio;
-            }
-            for (const modificador of yield Modificador_1.Modificador.find().where('_id').in(modificadores).exec()) {
-                if (modificador.precio)
-                    totalModificadores += modificador.precio;
-            }
-            // Se calculan subtotal y total
-            const subTotal = totalPlatillos + totalModificadores;
-            const total = (1 + _propina) * subTotal;
-            const costo = {
-                totalPlatillos,
-                totalModificadores,
-                propina: _propina,
-                subTotal,
-                total
-            };
+            let propina = getPropina(_propina);
+            const menuDocs = yield Menu_1.Menu.find().where('_id').in(menus).exec();
+            const modificadoresDocs = yield Modificador_1.Modificador.find().where('_id').in(modificadores).exec();
+            const totales = getTotales(menuDocs, modificadoresDocs, propina);
             const orden = {
                 usuario,
                 direccionEnvio,
                 metodoPago,
-                menu: menus,
-                modificadores,
-                costo
+                menu: menuDocs.map((menu) => menu._id),
+                modificadores: modificadoresDocs.map((modificador) => modificador._id),
+                costo: totales
             };
             const response = yield Orden_1.Orden.create(orden);
             res.send((0, util_1.stdRes)('ok', undefined, { id: response._id }));
@@ -117,12 +136,14 @@ exports.default = router.get('/', function (req, res) {
     });
 });
 // Funciones Auxiliares  ******************************************************
-function validaPropina(_propina) {
-    const propina = Number.parseFloat(_propina);
-    if (Number.isNaN(propina))
-        return false;
-    const index = [0, 5, 10, 15].findIndex((x) => x === propina);
-    return (index >= 0);
+function getPropina(_propina) {
+    let propina = 0;
+    if (_propina) {
+        const pparsed = Number.parseFloat(_propina);
+        if (!Number.isNaN(pparsed) && [0, 0.5, 0.1, 0.15].includes(pparsed))
+            propina = pparsed;
+    }
+    return propina;
 }
 function validaMetodoPago(metodoPago) {
     if (!metodoPago)
@@ -130,35 +151,58 @@ function validaMetodoPago(metodoPago) {
     const index = ["TARJETA CREDITO", "CONTRA ENTREGA"].findIndex(x => x === metodoPago);
     return (index >= 0);
 }
-function validaArrayIds(menus) {
-    if (!Array.isArray(menus))
-        return false;
-    // Se limita a un array de 19 id's
-    if (menus.length > 20)
-        return false;
-    // An Schema.Types.ObjectId must have a length = 24
-    return menus.every(x => x.length === 24);
-}
 function preValidaOrden(req, res, next) {
-    const { usuario, direccionEnvio, metodoPago, menu, modificadores, propina } = req.body;
-    if (usuario &&
-        direccionEnvio && direccionEnvio.length <= 50 &&
-        validaMetodoPago(metodoPago) &&
-        validaArrayIds(menu) &&
-        (!modificadores || validaArrayIds(modificadores)) &&
-        (!propina || validaPropina(propina))) {
-        next();
-    }
-    else {
-        res.status(400)
-            .send((0, util_1.stdRes)('warn', 'Los datos de entrada NO son validos'));
-    }
+    return __awaiter(this, void 0, void 0, function* () {
+        const { usuario, direccionEnvio, metodoPago } = req.body;
+        if (!(yield validaUsuarioId(usuario))) {
+            res.status(400)
+                .send((0, util_1.stdRes)('warn', 'USUARIO ID NO VALIDO'));
+        }
+        else if (direccionEnvio &&
+            direccionEnvio.length <= 50 &&
+            validaMetodoPago(metodoPago)) {
+            next();
+        }
+        else {
+            res.status(400)
+                .send((0, util_1.stdRes)('warn', 'DATOS DE ENTRADA NO VALIDOS'));
+        }
+    });
 }
 function validaOrdenId(req, res, next) {
     if (req.params.id.length === 24)
         next();
     else {
         res.status(400)
-            .send((0, util_1.stdRes)('warn', 'Id NO válido. Este debe ser de 24 hex chars.'));
+            .send((0, util_1.stdRes)('warn', 'ID NO VALIDO'));
     }
+}
+function validaUsuarioId(usuarioId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const usuario = yield Usuario_1.Usuario.findById(usuarioId).exec();
+        return usuario ? true : false;
+    });
+}
+function getTotales(menus, modificadores, propina) {
+    let totalPlatillos = 0;
+    let totalModificadores = 0;
+    for (const menu of menus) {
+        if (menu.disponibilidad && menu.precio)
+            totalPlatillos += menu.precio;
+    }
+    for (const modificador of modificadores) {
+        if (modificador.disponibilidad && modificador.precio) {
+            totalModificadores += modificador.precio;
+        }
+    }
+    // Se calculan subtotal y total
+    const subTotal = totalPlatillos + totalModificadores;
+    const totalStr = Number.parseFloat(`${(1 + propina) * subTotal}`).toFixed(2);
+    return {
+        totalPlatillos,
+        totalModificadores,
+        propina,
+        subTotal,
+        total: Number.parseFloat(totalStr)
+    };
 }

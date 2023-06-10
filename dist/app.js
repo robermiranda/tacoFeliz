@@ -23,8 +23,7 @@ exports.app = (0, express_1.default)()
     res.send({ status: 'warn', msg: '404. Recurso no encontrado.' });
 })
     .use(function (err, req, res, next) {
-    console.error('ERROR 500.', err.message);
-    console.error('ERROR DETALLE.', err);
+    console.error(err);
     res.status(500);
     res.send({ status: 'error', msg: 'ERROR en el servidor.' });
 });
