@@ -84,3 +84,11 @@ curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
 // Probando insertar un menu id que no existe
 curl -X POST localhost:3000/orden -H 'Content-Type: application/json' \
 -d '{"usuario": "647c269de10cf06f7279d47d", "metodoPago": "CONTRA ENTREGA", "direccionEnvio": "Av. Cuitlahuac No. 453", "menu": ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca0"]}'
+
+// VERIFICANDO DISPONIBILIDAD Y TOTALES
+curl -X POST localhost:3000/orden/totales -H 'Content-Type: application/json' \
+-d '{"menu": ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca9"], "modificadores": ["647cc4805cc6c871cab3258d", "647cc6415cc6c871cab32590"], "propina": 0.1}'
+
+// VERIFICANDO DISPONIBILIDAD Y TOTALES para menus que no existen
+curl -X POST localhost:3000/orden/totales -H 'Content-Type: application/json' \
+-d '{"menu": ["647d0e74be2c79e86b306bc0", "647d1500a126d507b0e2eca0"], "modificadores": ["647cc4805cc6c871cab3258d", "647cc6415cc6c871cab32590"], "propina": 0.1}'
