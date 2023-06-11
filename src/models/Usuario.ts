@@ -1,16 +1,30 @@
 import { Schema, model } from "mongoose";
 
+export type tipoUsuarioT = 'USUARIO_FINAL' | 'SUPER_ADMIN';
+
+export type estatusUsuarioT = 'ACTIVO' | 'BLOQUEADO';
+
+export const ESTATUS_USURIO = {
+    activo: 'ACTIVO',
+    bloqueado: 'BLOQUEADO'
+}
+
 export const TIPO_USUARIO = {
     final: 'USUARIO_FINAL',
     admin: 'SUPER_ADMIN'
 }
 
-export const ESTATUS_USUARIO = {
-    activo: 'ACTIVO',
-    bloqueado: 'BLOQUEADO'
+export interface usuarioI {
+    nombre: string,
+    apPaterno?: string,
+    apMaterno?: string,
+    estatus: estatusUsuarioT,
+    tipo: tipoUsuarioT,
+    email: string,
+    password: string
 }
 
-const usuarioSchema = new Schema({
+const usuarioSchema = new Schema<usuarioI>({
     nombre: {
         type: String,
         maxLength: 40,
@@ -39,15 +53,15 @@ const usuarioSchema = new Schema({
     estatus: {
         type: String,
         required: true,
-        default: ESTATUS_USUARIO.activo,
+        default: 'ACTIVO',
         maxLength: 20
     },
     tipo: {
         type: String,
         required: true,
-        default: TIPO_USUARIO.final,
+        default: 'USUARIO_FINAL',
         maxLength: 20
     }
 }, {versionKey: false});
 
-export const Usuario = model ("Usuario", usuarioSchema);
+export const Usuario = model<usuarioI> ("Usuario", usuarioSchema);
