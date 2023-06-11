@@ -4,7 +4,7 @@ export type tipoUsuarioT = 'USUARIO_FINAL' | 'SUPER_ADMIN';
 
 export type estatusUsuarioT = 'ACTIVO' | 'BLOQUEADO';
 
-export const ESTATUS_USURIO = {
+export const ESTATUS_USUARIO = {
     activo: 'ACTIVO',
     bloqueado: 'BLOQUEADO'
 }
