@@ -7,14 +7,17 @@ ejemplos de peticiones al servidor del taco feliz
 curl -X POST localhost:3000/usuario -H 'Content-Type: application/json' -d '{"nombre": "Berenice", "apPaterno": "Bravo", "email": "berenice@gmail.com", "password": "abc123"}'
 curl -X POST localhost:3000/usuario \
 -H 'Content-Type: application/json' \
--d '{"nombre": "Hugo", "apPaterno": "Hernandez", "email": "abelardo@gmail.com", "password": "abc123"}'
+-d '{"nombre": "Abel", "apPaterno": "Hernandez", "email": "abel@gmail.com", "password": "123"}'
 
+curl -X POST localhost:3000/usuario \
+-H 'Content-Type: application/json' \
+-d '{"nombre": ["1", "2"], "apPaterno": "Hernandez", "email": "abel@gmail.com", "password": "123"}'
 
 // BlOQUEAR USUARIO
 curl -X PATCH localhost:3000/usuario/estatus \
 -H 'Content-Type: application/json' \
 -H 'Accept: application/json' \
--d '{"emailUsuario": "samuel@gmail.com"}'
+-d '{"emailUsuario": "@gmail.com"}'
 
 // MODIFICADORES **************************************************************
 

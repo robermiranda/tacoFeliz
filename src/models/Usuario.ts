@@ -15,13 +15,13 @@ export const TIPO_USUARIO = {
 }
 
 export interface usuarioI {
-    nombre: string,
+    nombre?: string,
     apPaterno?: string,
     apMaterno?: string,
-    estatus: estatusUsuarioT,
-    tipo: tipoUsuarioT,
+    estatus?: estatusUsuarioT,
+    tipo?: tipoUsuarioT,
     email: string,
-    password: string
+    password?: string
 }
 
 const usuarioSchema = new Schema<usuarioI>({
